@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FinalSay.ai — Favorites</title>
+<style>
+  :root{--bg:#0f0f12;--panel:#17171c;--line:#2a2a36;--text:#eef;--muted:#a8a8b6;--accent:#ff5c5c;--accent2:#ff7a7a}
+  *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);color:var(--text)}
+  .wrap{max-width:1040px;margin:0 auto;padding:20px}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .logo{display:block;width:220px;max-width:60vw}
+  .nav{display:flex;gap:10px;flex-wrap:wrap}
+  .nav a{background:#21212a;color:#fff;border:1px solid var(--line);padding:10px 12px;border-radius:10px;text-decoration:none;font-weight:800}
+  h1{font-size:clamp(22px,4.5vw,30px);margin:10px 0}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+  .btn{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:none;padding:10px 12px;border-radius:10px;font-weight:900;cursor:pointer}
+  .btn.ghost{background:#21212a;border:1px solid var(--line)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px}
+  .row{display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .name{font-weight:900}
+  .muted{color:#a8a8b6;font-size:12px}
+  .sl{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:8px}
+  .pill{background:#21212a;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;text-align:center}
+  .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  input[type="file"]{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a href="/"><svg class="logo" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff5c5c"/><stop offset="100%" stop-color="#ff7a7a"/></linearGradient></defs><text x="0" y="82" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="72" fill="url(#g)">FinalSay.ai</text></svg></a>
+    <nav class="nav">
+      <a href="/">Modes</a>
+      <a href="/advanced.html">Advanced</a>
+      <a href="/build-voice.html">Build Your Voice</a>
+      <a href="/history.html">History</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/terms.html">Terms</a>
+    </nav>
+  </header>
+
+  <h1>Favorite Voices</h1>
+  <div class="controls">
+    <button id="exportAll" class="btn">Export All</button>
+    <label class="btn ghost" for="importFile">Import</label>
+    <input id="importFile" type="file" accept="application/json"/>
+    <button id="clearAll" class="btn ghost">Delete All</button>
+  </div>
+
+  <div id="grid" class="grid"></div>
+  <div id="empty" class="muted" style="margin-top:12px;display:none">No saved voices yet. Create one in Advanced or Build Your Voice.</div>
+</div>
+
+<script>
+  const PROFILE_KEY='fs_custom_voices';
+  const DEFAULT_ID_KEY='fs_default_voice_id';
+
+  function load(){ try{return JSON.parse(localStorage.getItem(PROFILE_KEY)||'[]');}catch{return[];} }
+  function save(arr){ localStorage.setItem(PROFILE_KEY, JSON.stringify(arr)); render(); }
+
+  function pill(label,val){ return `<div class="pill">${label}: ${val}</div>`; }
+
+  function render(){
+    const grid=document.getElementById('grid');
+    const empty=document.getElementById('empty');
+    const arr=load();
+    grid.innerHTML='';
+    empty.style.display = arr.length? 'none':'block';
+    arr.forEach(p=>{
+      const s=p.sliders||{};
+      const html = `
+      <div class="card" data-id="${p.id}">
+        <div class="row"><div class="name">${p.name}</div><div class="muted">${new Date(p.createdAt||Date.now()).toLocaleString()}</div></div>
+        <div class="sl">
+          ${pill('Direct',s.direct??'')}
+          ${pill('Empathy',s.empathy??'')}
+          ${pill('Formality',s.formality??'')}
+          ${pill('Humor',s.humor??'')}
+          ${pill('Roast',s.roast??'')}
+          ${pill('Heat',s.heat??'')}
+          ${pill('Optimism',s.optimism??'')}
+          ${pill('Sci/Spir',s.scispir??'')}
+          ${pill('Politics',s.politics??'')}
+          ${pill('Length',s.length??'')}
+        </div>
+        <div class="actions">
+          <button class="btn">Load in Advanced</button>
+          <button class="btn ghost star">${p.stars? '★ Unstar':'☆ Star'}</button>
+          <button class="btn ghost rename">Rename</button>
+          <button class="btn ghost export">Export</button>
+          <button class="btn ghost del">Delete</button>
+          <button class="btn ghost def">Set Default</button>
+        </div>
+      </div>`;
+      const div=document.createElement('div'); div.innerHTML=html; grid.appendChild(div.firstElementChild);
+    });
+
+    // Wire actions
+    grid.querySelectorAll('.card .btn').forEach(b=>{
+      const card=b.closest('.card'); const id=card.dataset.id;
+      const label=b.textContent.trim();
+      b.onclick=()=>{
+        const arr=load(); const i=arr.findIndex(x=>x.id===id); if(i<0) return;
+        const p=arr[i];
+        if(label==='Load in Advanced'){
+          localStorage.setItem('fs_reopen_voice', JSON.stringify(p));
+          location.href='/advanced.html?loadVoice=1';
+        } else if(label==='☆ Star' || label==='★ Unstar'){
+          p.stars = p.stars? 0:1; arr[i]=p; save(arr);
+        } else if(label==='Rename'){
+          const name=prompt('New name:', p.name||''); if(!name) return; p.name=name; arr[i]=p; save(arr);
+        } else if(label==='Export'){
+          const blob=new Blob([JSON.stringify(p,null,2)],{type:'application/json'});
+          const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`voice_${p.id}.json`; a.click(); URL.revokeObjectURL(url);
+        } else if(label==='Delete'){
+          if(confirm('Delete this voice?')){ arr.splice(i,1); save(arr); }
+        } else if(label==='Set Default'){
+          localStorage.setItem(DEFAULT_ID_KEY, id); alert('Default set.');
+        }
+      };
+    });
+  }
+
+  document.getElementById('exportAll').onclick=()=>{
+    const blob=new Blob([JSON.stringify(load(),null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='finalsay_voices.json'; a.click(); URL.revokeObjectURL(url);
+  };
+  document.getElementById('importFile').onchange=(e)=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    const fr=new FileReader();
+    fr.onload=()=>{ try{
+      const incoming=JSON.parse(String(fr.result)||'[]');
+      const cur=load();
+      const byId=new Map(cur.map(x=>[x.id,x]));
+      incoming.forEach(v=>{ if(!byId.has(v.id)) cur.unshift(v); });
+      save(cur.slice(0,200)); alert('Imported.');
+    }catch{ alert('Invalid JSON.'); } };
+    fr.readAsText(f);
+  };
+  document.getElementById('clearAll').onclick=()=>{ if(confirm('Delete all saved voices on this device?')){ localStorage.removeItem(PROFILE_KEY); render(); } };
+
+  render();
+</script>
+</body>
+</html>
