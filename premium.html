@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FinalSay.ai — Upgrade</title>
+<style>
+  :root{--bg:#0f0f12;--panel:#17171c;--line:#2a2a36;--text:#eef;--muted:#a8a8b6;--accent:#ff5c5c;--accent2:#ff7a7a}
+  *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);color:var(--text)}
+  .wrap{max-width:780px;margin:0 auto;padding:20px}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .logo{display:block;width:220px;max-width:60vw}
+  .nav{display:flex;gap:10px;flex-wrap:wrap}
+  .nav a{background:#21212a;color:#fff;border:1px solid var(--line);padding:10px 12px;border-radius:10px;text-decoration:none;font-weight:800}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  h1{font-size:clamp(22px,4.5vw,30px);margin:10px 0}
+  .card{background:#1b1b23;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
+  .btn{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:none;padding:12px 14px;border-radius:10px;font-weight:900;cursor:pointer}
+  .btn.ghost{background:#21212a;border:1px solid var(--line)}
+  .muted{color:#a8a8b6}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .ok{color:#90ee90;font-weight:800}
+  .warn{color:#ffd27f;font-weight:800}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a href="/"><svg class="logo" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff5c5c"/><stop offset="100%" stop-color="#ff7a7a"/></linearGradient></defs><text x="0" y="82" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="72" fill="url(#g)">FinalSay.ai</text></svg></a>
+    <nav class="nav">
+      <a href="/">Modes</a>
+      <a href="/advanced.html">Advanced</a>
+      <a href="/personas.html">Personas</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/terms.html">Terms</a>
+    </nav>
+  </header>
+
+  <div class="panel">
+    <h1>Unlock Premium Personas</h1>
+    <p class="muted">Click the button below to enable premium personas on <b>this device</b> (dev toggle using <code>localStorage</code>). You can reset anytime.</p>
+
+    <div class="card">
+      <div id="statusLine" class="muted">Checking status…</div>
+      <div class="row">
+        <button id="upgrade" class="btn">Unlock Premium (dev)</button>
+        <button id="reset" class="btn ghost">Reset Unlock</button>
+        <a href="/advanced.html" class="btn ghost">Back to Advanced</a>
+      </div>
+      <p class="muted" style="margin-top:10px">Tip: If you just uploaded new code, append <code>?v=2</code> to this URL to bypass cache.</p>
+    </div>
+
+    <div class="card">
+      <h3>What happens after unlock?</h3>
+      <ul class="muted">
+        <li>We set <code>localStorage.fs_is_premium = '1'</code>.</li>
+        <li>If you came here from a locked persona, we’ll send you back to Advanced and apply it.</li>
+        <li>To test quickly, open <a href="/personas.html">Personas</a> and try any “Pro” persona.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+const PREMIUM_FLAG='fs_is_premium';
+
+function showStatus(){
+  const v = localStorage.getItem(PREMIUM_FLAG);
+  const pending = localStorage.getItem('fs_pending_persona');
+  const apply = localStorage.getItem('fs_apply_persona');
+  const el = document.getElementById('statusLine');
+  el.innerHTML = `
+    Premium status: ${v==='1' ? '<span class="ok">UNLOCKED</span>' : '<span class="warn">LOCKED</span>'}
+    ${pending ? ' • pending persona: <code>'+pending+'</code>' : ''}
+    ${apply ? ' • applying: <code>yes</code>' : ''}
+  `;
+}
+
+function goBack(){
+  // If we were trying to apply a persona, return to Advanced and let it apply
+  const hasApply = !!localStorage.getItem('fs_apply_persona');
+  if(hasApply){
+    window.location.href='/advanced.html?applyPersona=1';
+  }else{
+    window.location.href='/advanced.html';
+  }
+}
+
+document.getElementById('upgrade').onclick=()=>{
+  try{
+    localStorage.setItem(PREMIUM_FLAG,'1');
+    showStatus();
+    alert('Premium unlocked on this device.');
+    goBack();
+  }catch(e){
+    alert('Could not set premium flag: '+e.message);
+  }
+};
+
+document.getElementById('reset').onclick=()=>{
+  try{
+    localStorage.removeItem(PREMIUM_FLAG);
+    // Also clear pending/apply markers to avoid confusion during tests
+    localStorage.removeItem('fs_pending_persona');
+    // Leave fs_apply_persona intact so user can still return and apply if they want
+    showStatus();
+    alert('Premium reset on this device.');
+  }catch(e){
+    alert('Could not reset: '+e.message);
+  }
+};
+
+// On load
+showStatus();
+</script>
+</body>
+</html>
