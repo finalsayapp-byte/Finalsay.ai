@@ -5,12 +5,14 @@
 <title>FinalSay.ai — Advanced Reply</title>
 <style>
   :root{--bg:#0f0f12;--panel:#17171c;--line:#2a2a36;--text:#eef;--muted:#a8a8b6;--accent:#ff5c5c;--accent2:#ff7a7a}
-  *{box-sizing:border-box} body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
-  .wrap{max-width:1040px;margin:0 auto;padding:20px}
+  *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);color:var(--text)}
+  .wrap{max-width:1180px;margin:0 auto;padding:20px}
   header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
   .logo{display:block;width:220px;max-width:60vw}
   .nav{display:flex;gap:10px;flex-wrap:wrap}
   .nav a{background:#21212a;color:#fff;border:1px solid var(--line);padding:10px 12px;border-radius:10px;text-decoration:none;font-weight:800}
+  .layout{display:grid;grid-template-columns:320px 1fr;gap:16px}
+  .sidebar{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
   .container{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
   h1{font-size:clamp(22px,4.5vw,30px);margin:10px 0}
   label{display:block;margin:12px 0 6px}
@@ -33,6 +35,16 @@
   .bar{flex:1;height:10px;background:#22232b;border:1px solid var(--line);border-radius:999px;overflow:hidden}
   .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
   .count{font-size:12px;color:#d8d8e4;min-width:160px;text-align:right}
+
+  .sidegroup{margin-bottom:12px}
+  .sidegroup h3{margin:4px 0 6px;font-size:14px;color:#cfd6ff}
+  .sidegroup input{width:100%;background:#1e1e26;color:#eef;border:1px solid var(--line);border-radius:10px;padding:10px}
+  .persona-list{max-height:52vh;overflow:auto;display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .persona{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#20202a;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .persona .name{font-weight:800}
+  .persona .sector{font-size:11px;color:#a8a8b6}
+  .persona .use{padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#2a2a35;color:#fff;cursor:pointer}
+  .pill{padding:3px 8px;border-radius:999px;background:#2a2a35;border:1px solid var(--line);font-size:11px}
 </style>
 </head>
 <body>
@@ -40,64 +52,94 @@
   <header>
     <a href="/"><svg class="logo" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff5c5c"/><stop offset="100%" stop-color="#ff7a7a"/></linearGradient></defs><text x="0" y="82" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="72" fill="url(#g)">FinalSay.ai</text></svg></a>
     <nav class="nav">
-      <a href="/">Modes</a><a href="/history.html">History</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a>
+      <a href="/">Modes</a>
+      <a href="/build-voice.html">Build Your Voice</a>
+      <a href="/favorites.html">Favorites</a>
+      <a href="/history.html">History</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/terms.html">Terms</a>
     </nav>
   </header>
 
-  <div class="container">
-    <h1>Advanced Reply</h1>
-    <div class="hint">Describe the situation and your goal. Pick intents and adjust the voice sliders. You’ll get a long, tailored reply.</div>
+  <div class="layout">
+    <!-- Sidebar: Personas -->
+    <aside class="sidebar">
+      <div class="sidegroup">
+        <h3>Persona Presets</h3>
+        <input id="psearch" placeholder="Search personas…"/>
+      </div>
+      <div id="pcounts" class="hint"></div>
+      <div id="plist" class="persona-list"></div>
+      <div class="sidegroup" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <button id="reloadPersonas" class="btn secondary">Reload Personas</button>
+        <button id="savePreset" class="btn secondary">Save Current as Preset</button>
+        <button id="setDefault" class="btn secondary">Set as Default</button>
+      </div>
+      <div class="hint" style="margin-top:6px">Tip: Add more presets by placing <code>/personas.json</code> at site root (120–150 “no‑limits” edition). This page will auto‑load it.</div>
+    </aside>
 
-    <label for="scenario">Describe the scenario (context, who said what, any constraints)</label>
-    <textarea id="scenario" placeholder="Example: My manager publicly criticized my work in Slack for being 'slow and overthought.' I want to reply without burning bridges, but I need to push back and ask for clearer expectations. Include that our timeline changed twice."></textarea>
+    <!-- Main -->
+    <main class="container">
+      <h1>Advanced Reply</h1>
+      <div class="hint">Describe the situation and your goal. Pick intents, load a persona, or tune sliders. You’ll get a tailored long reply.</div>
 
-    <label for="intentText">Your intent (what outcome do you want?)</label>
-    <textarea id="intentText" class="small" placeholder="Example: Defend my work calmly, ask for expectations and a 1:1, preserve the relationship, and set a boundary about public call-outs."></textarea>
+      <label for="scenario">Describe the scenario (context, who said what, constraints)</label>
+      <textarea id="scenario" placeholder="Example: My manager publicly criticized my work in Slack for being 'slow.' I want to push back, ask for clearer expectations, and protect the relationship."></textarea>
 
-    <div class="hint" style="margin-top:6px;">Quick intents (optional): tap to include</div>
-    <div class="chips" id="intents">
-      <button class="chip" data-intent="Defuse tension">Defuse tension</button>
-      <button class="chip" data-intent="Persuade them">Persuade</button>
-      <button class="chip" data-intent="Set boundary">Set boundary</button>
-      <button class="chip" data-intent="Request clarity">Request clarity</button>
-      <button class="chip" data-intent="Educate politely">Educate politely</button>
-      <button class="chip" data-intent="Disagree respectfully">Disagree respectfully</button>
-      <button class="chip" data-intent="Win the argument">Win the argument</button>
-      <button class="chip" data-intent="Be funny">Be funny</button>
-      <button class="chip" data-intent="Be professional">Be professional</button>
-      <button class="chip" data-intent="Be compassionate">Be compassionate</button>
-    </div>
+      <label for="intentText">Your intent (desired outcome)</label>
+      <textarea id="intentText" class="small" placeholder="Example: Defend my work calmly, ask for expectations and a 1:1, and set a boundary about public call-outs."></textarea>
 
-    <div class="grid" id="eq">
-      <div class="slider"><label>Political Lean <span id="v_politics">50</span></label><input id="politics" type="range" min="0" max="100" value="50"></div>
-      <div class="slider"><label>Science ↔ Spiritual <span id="v_scispir">50</span></label><input id="scispir" type="range" min="0" max="100" value="50"></div>
-      <div class="slider"><label>Heat (Zen ↔ Hot) <span id="v_heat">40</span></label><input id="heat" type="range" min="0" max="100" value="40"></div>
-      <div class="slider"><label>Formality <span id="v_formality">55</span></label><input id="formality" type="range" min="0" max="100" value="55"></div>
-      <div class="slider"><label>Empathy <span id="v_empathy">70</span></label><input id="empathy" type="range" min="0" max="100" value="70"></div>
-      <div class="slider"><label>Directness <span id="v_direct">65</span></label><input id="direct" type="range" min="0" max="100" value="65"></div>
-      <div class="slider"><label>Humor (Dry ↔ Absurd) <span id="v_humor">45</span></label><input id="humor" type="range" min="0" max="100" value="45"></div>
-      <div class="slider"><label>Sarcasm/Roast <span id="v_roast">35</span></label><input id="roast" type="range" min="0" max="100" value="35"></div>
-      <div class="slider"><label>Optimism (Cynical ↔ Idealist) <span id="v_optimism">60</span></label><input id="optimism" type="range" min="0" max="100" value="60"></div>
-      <div class="slider"><label>Length (Short ↔ Long) <span id="v_length">75</span></label><input id="length" type="range" min="0" max="100" value="75"></div>
-    </div>
+      <div class="hint" style="margin-top:6px;">Quick intents (optional): tap to include</div>
+      <div class="chips" id="intents">
+        <button class="chip" data-intent="Defuse tension">Defuse tension</button>
+        <button class="chip" data-intent="Persuade">Persuade</button>
+        <button class="chip" data-intent="Set boundary">Set boundary</button>
+        <button class="chip" data-intent="Request clarity">Request clarity</button>
+        <button class="chip" data-intent="Educate politely">Educate politely</button>
+        <button class="chip" data-intent="Disagree respectfully">Disagree respectfully</button>
+        <button class="chip" data-intent="Win the argument">Win the argument</button>
+        <button class="chip" data-intent="Be funny">Be funny</button>
+        <button class="chip" data-intent="Be professional">Be professional</button>
+        <button class="chip" data-intent="Be compassionate">Be compassionate</button>
+      </div>
 
-    <div class="row">
-      <button id="generate" class="btn">Generate Advanced Reply</button>
-      <button id="reset" class="btn secondary">Reset</button>
-    </div>
+      <div class="grid" id="eq">
+        <div class="slider"><label>Political Lean <span id="v_politics">50</span></label><input id="politics" type="range" min="0" max="100" value="50"></div>
+        <div class="slider"><label>Science ↔ Spiritual <span id="v_scispir">50</span></label><input id="scispir" type="range" min="0" max="100" value="50"></div>
+        <div class="slider"><label>Heat (Zen ↔ Hot) <span id="v_heat">40</span></label><input id="heat" type="range" min="0" max="100" value="40"></div>
+        <div class="slider"><label>Formality <span id="v_formality">55</span></label><input id="formality" type="range" min="0" max="100" value="55"></div>
+        <div class="slider"><label>Empathy <span id="v_empathy">70</span></label><input id="empathy" type="range" min="0" max="100" value="70"></div>
+        <div class="slider"><label>Directness <span id="v_direct">65</span></label><input id="direct" type="range" min="0" max="100" value="65"></div>
+        <div class="slider"><label>Humor (Dry ↔ Absurd) <span id="v_humor">45</span></label><input id="humor" type="range" min="0" max="100" value="45"></div>
+        <div class="slider"><label>Sarcasm/Roast <span id="v_roast">35</span></label><input id="roast" type="range" min="0" max="100" value="35"></div>
+        <div class="slider"><label>Optimism (Cynical ↔ Idealist) <span id="v_optimism">60</span></label><input id="optimism" type="range" min="0" max="100" value="60"></div>
+        <div class="slider"><label>Length (Short ↔ Long) <span id="v_length">75</span></label><input id="length" type="range" min="0" max="100" value="75"></div>
+      </div>
 
-    <div id="status" class="hint"></div>
-    <div id="output" class="reply" style="display:none"></div>
+      <div class="row">
+        <button id="generate" class="btn">Generate Advanced Reply</button>
+        <button id="reset" class="btn secondary">Reset</button>
+      </div>
 
-    <div class="meter" aria-live="polite">
-      <div class="bar"><div id="fill" class="fill"></div></div>
-      <div id="counter" class="count">0 / 10 free today</div>
-    </div>
+      <div id="status" class="hint"></div>
+      <div id="output" class="reply" style="display:none"></div>
+
+      <div class="meter" aria-live="polite">
+        <div class="bar"><div id="fill" class="fill"></div></div>
+        <div id="counter" class="count">0 / 10 free today</div>
+      </div>
+    </main>
   </div>
 </div>
 
 <script>
-  // Intent chips
+  // ===== Global constants =====
+  const DAILY_LIMIT=10;
+  const HISTORY_KEY='fs_history';
+  const PROFILE_KEY='fs_custom_voices';
+  const DEFAULT_ID_KEY='fs_default_voice_id';
+
+  // ===== Intent chips =====
   const intentSet = new Set();
   document.getElementById('intents').addEventListener('click', (e)=>{
     if(!e.target.classList.contains('chip')) return;
@@ -106,7 +148,7 @@
     else { intentSet.add(val); e.target.classList.add('active'); }
   });
 
-  // Sliders + labels
+  // ===== Sliders + labels =====
   const slidersList=['politics','scispir','heat','formality','empathy','direct','humor','roast','optimism','length'];
   slidersList.forEach(id=>{
     const el=document.getElementById(id);
@@ -115,22 +157,100 @@
     el.addEventListener('input',update); update();
   });
 
-  // Usage meter
-  const DAILY_LIMIT=10;
+  // ===== Usage meter =====
   const todayKey=()=>{const d=new Date();return `fs_uses_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
   const getCount=()=>Number(localStorage.getItem(todayKey())||0);
-  const bump=()=>{const k=todayKey();localStorage.setItem(k,String(getCount()+1));refresh();}
-  const refresh=()=>{const used=getCount();const pct=Math.min(100,Math.round((used/DAILY_LIMIT)*100));document.getElementById('fill').style.width=pct+'%';document.getElementById('counter').textContent=`${used} / ${DAILY_LIMIT} free today`;};
-  refresh();
+  const bump=()=>{const k=todayKey();localStorage.setItem(k,String(getCount()+1));refreshMeter();}
+  const refreshMeter=()=>{const used=getCount();const pct=Math.min(100,Math.round((used/DAILY_LIMIT)*100));document.getElementById('fill').style.width=pct+'%';document.getElementById('counter').textContent=`${used} / ${DAILY_LIMIT} free today`;};
+  refreshMeter();
 
-  // History save
+  // ===== Unified history save =====
   function saveHistoryAdvanced(entry){
-    const list = JSON.parse(localStorage.getItem('fs_history')||'[]');
+    const list = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
     list.unshift(entry);
-    localStorage.setItem('fs_history', JSON.stringify(list.slice(0,50)));
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0,200)));
   }
 
-  // Prefill from History (Reopen)
+  // ===== Personas loader (auto-load /personas.json if available) =====
+  const FALLBACK_PERSONAS = [
+    {id:'buddha',name:'Buddha',sector:'Spiritual & Mystical',defaults:{politics:50,scispir:65,heat:10,formality:60,empathy:90,direct:55,humor:5,roast:0,optimism:75,length:70}},
+    {id:'roastmaster',name:'Roastmaster',sector:'Humor & Satire',defaults:{politics:50,scispir:45,heat:65,formality:40,empathy:35,direct:85,humor:90,roast:80,optimism:55,length:45}},
+    {id:'hostage',name:'Hostage Negotiator',sector:'Negotiation & Influence',defaults:{politics:50,scispir:45,heat:25,formality:65,empathy:80,direct:55,humor:10,roast:0,optimism:40,length:70}},
+    {id:'yoda',name:'Yoda (homage)',sector:'Pop Culture & Fictional',defaults:{politics:50,scispir:70,heat:10,formality:65,empathy:80,direct:55,humor:20,roast:10,optimism:70,length:55}},
+    {id:'greedy',name:'Greedy Mogul',sector:'Vices & Extremes',defaults:{politics:50,scispir:40,heat:45,formality:65,empathy:20,direct:85,humor:25,roast:20,optimism:55,length:50}},
+    {id:'nonbinary',name:'Non-Binary Visionary',sector:'LGBTQIA+ & Identity',defaults:{politics:50,scispir:45,heat:30,formality:55,empathy:85,direct:60,humor:35,roast:15,optimism:75,length:60}},
+    {id:'autistic_literalist',name:'Autistic Literalist',sector:'Neurodiversity',defaults:{politics:50,scispir:45,heat:20,formality:65,empathy:45,direct:85,humor:10,roast:0,optimism:45,length:60}},
+    {id:'tony',name:'Tony Soprano (homage)',sector:'Pop Culture & Fictional',defaults:{politics:50,scispir:45,heat:45,formality:55,empathy:45,direct:85,humor:25,roast:25,optimism:45,length:55}},
+    {id:'union',name:'Union Leader',sector:'Negotiation & Influence',defaults:{politics:40,scispir:40,heat:55,formality:55,empathy:65,direct:70,humor:35,roast:25,optimism:55,length:70}},
+    {id:'dark_horse',name:'Dark Horse',sector:'Psychological (Style)',defaults:{politics:50,scispir:45,heat:35,formality:55,empathy:45,direct:75,humor:15,roast:15,optimism:55,length:50}}
+  ];
+
+  async function fetchPersonas(){
+    try{
+      const res = await fetch('/personas.json',{cache:'no-store'});
+      if(!res.ok) throw new Error('not found');
+      const data = await res.json();
+      return Array.isArray(data.personas)?data.personas:FALLBACK_PERSONAS;
+    }catch{ return FALLBACK_PERSONAS; }
+  }
+
+  function renderPersonas(list){
+    const plist=document.getElementById('plist');
+    const pcounts=document.getElementById('pcounts');
+    plist.innerHTML='';
+    pcounts.textContent = `${list.length} persona${list.length!==1?'s':''} loaded`;
+    const q = (document.getElementById('psearch').value||'').toLowerCase().trim();
+    list.filter(p=>{
+      if(!q) return true;
+      return (p.name+' '+(p.sector||'')).toLowerCase().includes(q);
+    }).forEach(p=>{
+      const el=document.createElement('div');
+      el.className='persona';
+      el.innerHTML=`<div><div class="name">${p.name}</div><div class="sector">${p.sector||''}</div></div><button class="use">Load</button>`;
+      el.querySelector('.use').onclick=()=>applyPersona(p);
+      plist.appendChild(el);
+    });
+  }
+
+  function applyPersona(p){
+    const defs=p.defaults||{};
+    for(const k of slidersList){
+      if(defs[k]!=null){
+        const el=document.getElementById(k);
+        if(el){ el.value=defs[k]; const v=document.getElementById('v_'+(k==='scispir'?'scispir':k)); if(v) v.textContent=defs[k]; }
+      }
+    }
+  }
+
+  // Boot personas
+  let _personas=[];
+  (async function initPersonas(){
+    _personas = await fetchPersonas();
+    renderPersonas(_personas);
+  })();
+  document.getElementById('psearch').oninput=()=>renderPersonas(_personas);
+  document.getElementById('reloadPersonas').onclick=async()=>{ _personas=await fetchPersonas(); renderPersonas(_personas); };
+
+  // ===== Save as preset / Set default =====
+  document.getElementById('savePreset').onclick=()=>{
+    const name=prompt('Name this voice preset:');
+    if(!name) return;
+    const sliders=Object.fromEntries(slidersList.map(k=>[k,+document.getElementById(k).value]));
+    const intents=Array.from(intentSet);
+    const id='voice_'+Date.now();
+    const profile={id,name,createdAt:Date.now(),sliders,intents,notes:'Saved from Advanced',stars:0};
+    const arr=JSON.parse(localStorage.getItem(PROFILE_KEY)||'[]'); arr.unshift(profile);
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(arr.slice(0,200)));
+    if(confirm('Set as your default voice?')) localStorage.setItem(DEFAULT_ID_KEY, id);
+    alert('Saved.');
+  };
+  document.getElementById('setDefault').onclick=()=>{
+    const arr=JSON.parse(localStorage.getItem(PROFILE_KEY)||'[]');
+    if(!arr.length){ alert('No saved presets yet. Use “Save Current as Preset” first.'); return; }
+    const id=arr[0].id; localStorage.setItem(DEFAULT_ID_KEY,id); alert('Default voice set to your most recent preset.');
+  };
+
+  // ===== Reopen from History or load default voice =====
   (function tryReopen(){
     const url=new URL(location.href);
     if(url.searchParams.get('reopen')==='1'){
@@ -146,26 +266,27 @@
               if(btn){ btn.classList.add('active'); intentSet.add(v); }
             });
           }
-          if(it.sliders){
-            for(const k in it.sliders){
-              const el=document.getElementById(k);
-              const val=it.sliders[k];
-              if(el){ el.value=val; const v=document.getElementById('v_'+(k==='scispir'?'scispir':k)); if(v) v.textContent=val; }
-            }
-          }
+          if(it.sliders){ for(const k in it.sliders){ const el=document.getElementById(k); const val=it.sliders[k]; if(el){ el.value=val; const v=document.getElementById('v_'+(k==='scispir'?'scispir':k)); if(v) v.textContent=val; } } }
         }catch{}
         localStorage.removeItem('fs_reopen');
+      }
+    } else {
+      const defId = localStorage.getItem(DEFAULT_ID_KEY);
+      if(defId){
+        const profiles = JSON.parse(localStorage.getItem(PROFILE_KEY)||'[]');
+        const v = profiles.find(p=>p.id===defId);
+        if(v && v.sliders){ for(const k in v.sliders){ const el=document.getElementById(k); if(el){ el.value=v.sliders[k]; document.getElementById('v_'+(k==='scispir'?'scispir':k)).textContent=v.sliders[k]; } } }
       }
     }
   })();
 
-  // Generate
-  const btn=document.getElementById('generate'); const out=document.getElementById('output'); const statusEl=document.getElementById('status');
+  // ===== Generate =====
+  const btn=document.getElementById('generate'),out=document.getElementById('output'),statusEl=document.getElementById('status');
   btn.addEventListener('click', async ()=>{
     const scenario=document.getElementById('scenario').value.trim();
     const intentText=document.getElementById('intentText').value.trim();
     if(!scenario) return alert('Please describe the scenario first.');
-    const sliders={politics:+politics.value, scispir:+scispir.value, heat:+heat.value, formality:+formality.value, empathy:+empathy.value, direct:+direct.value, humor:+humor.value, roast:+roast.value, optimism:+optimism.value, length:+length.value};
+    const sliders=Object.fromEntries(slidersList.map(k=>[k,+document.getElementById(k).value]));
     const payload={ mode:'advanced', scenario, intentText, intents:Array.from(intentSet), sliders };
     btn.disabled=true; btn.textContent='Weaving…'; statusEl.textContent='Composing a long, tailored reply…'; out.style.display='none'; out.textContent='';
     try{
@@ -180,7 +301,7 @@
     finally{btn.disabled=false; btn.textContent='Generate Advanced Reply';}
   });
 
-  // Reset
+  // ===== Reset =====
   document.getElementById('reset').addEventListener('click',()=>{
     document.getElementById('scenario').value='';
     document.getElementById('intentText').value='';
