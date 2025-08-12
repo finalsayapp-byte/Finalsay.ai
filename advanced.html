@@ -45,6 +45,13 @@
   .persona .sector{font-size:11px;color:#a8a8b6}
   .persona .use{padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#2a2a35;color:#fff;cursor:pointer}
   .pill{padding:3px 8px;border-radius:999px;background:#2a2a35;border:1px solid var(--line);font-size:11px}
+
+  .rowline{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:8px 0 2px}
+  .switch{display:inline-flex;align-items:center;gap:8px;background:#1b1b23;border:1px solid var(--line);padding:8px 10px;border-radius:10px}
+  .switch input{transform:scale(1.2)}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{background:#1b1b23;color:#fff;border:none;padding:8px 10px;cursor:pointer}
+  .seg button.active{background:#2a2a35}
 </style>
 </head>
 <body>
@@ -82,11 +89,23 @@
     <!-- Main -->
     <main class="container">
       <h1>Advanced Reply</h1>
-      <div class="hint">Paste the message you want to respond to, then (optionally) add context and your goal. Pick intents, load a persona, or tune sliders. You’ll get a tailored long reply.</div>
+      <div class="hint">Paste the message you want to respond to, then (optionally) add context and your goal. Toggle <b>Direct, copy‑ready reply</b> to get a message you can paste back immediately.</div>
 
-      <!-- NEW: Primary message box -->
+      <!-- NEW: Controls -->
+      <div class="rowline">
+        <label class="switch"><input id="directOnly" type="checkbox" checked/> Direct, copy‑ready reply (no advice)</label>
+        <div class="switch">Format:
+          <span class="seg" id="formatSeg">
+            <button data-fmt="short" class="active">Short</button>
+            <button data-fmt="normal">Normal</button>
+            <button data-fmt="long">Long</button>
+          </span>
+        </div>
+      </div>
+
+      <!-- Primary message box -->
       <label for="message">Message to reply to</label>
-      <textarea id="message" class="small" placeholder="Paste the exact text you want to respond to."></textarea>
+      <textarea id="message" class="small" placeholder="Paste the exact text you want to respond to." autofocus></textarea>
 
       <label for="scenario">Describe the scenario (context, who said what, constraints)</label>
       <textarea id="scenario" placeholder="Example: My manager publicly criticized my work in Slack for being 'slow.' I want to push back, ask for clearer expectations, and protect the relationship."></textarea>
@@ -153,6 +172,15 @@
     const val = e.target.dataset.intent;
     if(intentSet.has(val)){ intentSet.delete(val); e.target.classList.remove('active'); }
     else { intentSet.add(val); e.target.classList.add('active'); }
+  });
+
+  // ===== Format segment =====
+  let replyFormat='short';
+  document.getElementById('formatSeg').addEventListener('click',(e)=>{
+    if(e.target.tagName!=='BUTTON') return;
+    [...e.currentTarget.children].forEach(b=>b.classList.remove('active'));
+    e.target.classList.add('active');
+    replyFormat = e.target.dataset.fmt;
   });
 
   // ===== Sliders + labels =====
@@ -245,8 +273,6 @@
   // ===== Reopen routes + default loader =====
   (function bootLoaders(){
     const url=new URL(location.href);
-
-    // From Personas page: applyPersona
     if(url.searchParams.get('applyPersona')==='1'){
       const raw=localStorage.getItem('fs_apply_persona');
       if(raw){
@@ -275,7 +301,8 @@
       return alert('Please paste the message to reply to, or describe the scenario (ideally both).');
     }
     const sliders=Object.fromEntries(['politics','scispir','heat','formality','empathy','direct','humor','roast','optimism','length'].map(k=>[k,+document.getElementById(k).value]));
-    const payload={ mode:'advanced', message, scenario, intentText, intents:Array.from(intentSet), sliders };
+    const directOnly = document.getElementById('directOnly').checked;
+    const payload={ mode:'advanced', message, scenario, intentText, intents:Array.from(intentSet), sliders, directOnly, replyFormat };
     btn.disabled=true; btn.textContent='Weaving…'; statusEl.textContent='Composing a long, tailored reply…'; out.style.display='none'; out.textContent='';
     try{
       const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -283,7 +310,7 @@
       const reply=Array.isArray(data.replies)?data.replies.join('\n\n'):String(data.replies);
       out.textContent=reply; out.style.display='block';
       out.onclick=async()=>{await navigator.clipboard.writeText(out.textContent); out.classList.add('copied'); setTimeout(()=>out.classList.remove('copied'),700);};
-      saveHistoryAdvanced({ ts: Date.now(), mode:'advanced', message, scenario, intentText, intents:Array.from(intentSet), sliders, output: reply });
+      saveHistoryAdvanced({ ts: Date.now(), mode:'advanced', message, scenario, intentText, intents:Array.from(intentSet), sliders, directOnly, replyFormat, output: reply });
       bump(); statusEl.textContent='';
     }catch(e){out.style.display='block'; out.textContent='Error: '+e.message; statusEl.textContent='Try again in a moment.';}
     finally{btn.disabled=false; btn.textContent='Generate Advanced Reply';}
@@ -299,6 +326,6 @@
     const defaults={politics:50,scispir:50,heat:40,formality:55,empathy:70,direct:65,humor:45,roast:35,optimism:60,length:75};
     for(const k in defaults){document.getElementById(k).value=defaults[k]; document.getElementById('v_'+(k==='scispir'?'scispir':k)).textContent=defaults[k];}
   });
-  document.getElementById('message').focus();</script>
+</script>
 </body>
 </html>
