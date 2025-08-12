@@ -34,6 +34,10 @@
   .examples{margin-top:18px; border-top:1px dashed var(--line); padding-top:12px}
   .exline{margin:8px 0; font-size:14px}
   .exlabel{display:inline-block; min-width:170px; color:#ffa8a8}
+  .meter{margin-top:14px; display:flex; align-items:center; gap:10px}
+  .bar{flex:1; height:10px; background:#22232b; border:1px solid var(--line); border-radius:999px; overflow:hidden}
+  .fill{height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .count{font-size:12px; color:#d8d8e4; min-width:160px; text-align:right}
   footer{margin:26px 0 20px; text-align:center; color:var(--muted); font-size:14px}
   footer a{color:#ff7a7a; text-decoration:none; margin:0 6px}
   footer a:hover{text-decoration:underline}
@@ -62,11 +66,11 @@
     </header>
 
     <div class="container">
-      <h1>Paste a post. Pick a voice. Drop a mic.</h1>
-      <div class="hint">You’ll get 3 sharp, quotable replies. Tap to copy. History is saved on this device.</div>
+      <h1>Paste a message. Pick a voice. Drop a mic.</h1>
+      <div class="hint">Get 3 sharp, quotable replies for any message, post, or comment. Tap to copy. Your history is saved on this device.</div>
 
-      <label for="text">Post / comment you want to reply to</label>
-      <textarea id="text" placeholder="Paste the post here… (1–3 sentences works best)"></textarea>
+      <label for="text">Paste the message you want to reply to</label>
+      <textarea id="text" placeholder="Paste the message, post, or comment here… (1–3 sentences works best)"></textarea>
 
       <label>Choose a voice</label>
       <div class="tones" id="tones">
@@ -86,10 +90,16 @@
 
       <div id="output"></div>
 
+      <!-- Usage meter -->
+      <div class="meter" aria-live="polite">
+        <div class="bar"><div id="fill" class="fill"></div></div>
+        <div id="counter" class="count">0 / 10 free today</div>
+      </div>
+
       <!-- Example tone outputs -->
       <div class="examples" id="examples">
-        <div class="hint">Example (same post, 7 voices)</div>
-        <div class="exline"><span class="exlabel">Post:</span> “Some people just don’t get it. Simplicity is the key to genius.”</div>
+        <div class="hint">Example (same message, 7 voices)</div>
+        <div class="exline"><span class="exlabel">Message:</span> “Some people just don’t get it. Simplicity is the key to genius.”</div>
         <div class="exline"><span class="exlabel">Savage:</span> Genius? You’re still trying to unlock the shopping cart at Aldi.</div>
         <div class="exline"><span class="exlabel">Witty & Sarcastic:</span> Ah yes, the eternal wisdom of fridge-magnet philosophy.</div>
         <div class="exline"><span class="exlabel">Inspirational & Profound:</span> True genius is the courage to keep the simple honest without making it small.</div>
@@ -107,7 +117,7 @@
   </div>
 
 <script>
-  // Tone pills
+  // ---- Tone pills ----
   let tone = "Savage";
   document.getElementById('tones').addEventListener('click', (e)=>{
     if(!e.target.classList.contains('tone')) return;
@@ -116,7 +126,23 @@
     tone = e.target.dataset.tone;
   });
 
-  // Helpers
+  // ---- Usage meter (local only, resets at midnight) ----
+  const DAILY_LIMIT = 10; // visible only; not enforced yet
+  function todayKey(){
+    const d = new Date(); // local time
+    return `fs_uses_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function getCount(){ return Number(localStorage.getItem(todayKey())||0); }
+  function bumpCount(){ const k=todayKey(); const v=getCount()+1; localStorage.setItem(k, String(v)); refreshMeter(); }
+  function refreshMeter(){
+    const used = getCount();
+    const pct = Math.min(100, Math.round((used/DAILY_LIMIT)*100));
+    document.getElementById('fill').style.width = pct + '%';
+    document.getElementById('counter').textContent = `${used} / ${DAILY_LIMIT} free today`;
+  }
+  refreshMeter();
+
+  // ---- Helpers ----
   const stripOuterQuotes = s => s.replace(/^["“”'`]+|["“”'`]+$/g,'');
   const cleanLine = s => stripOuterQuotes(s.replace(/^\s*\d+\.\s*/, '').trim());
   const saveHistory = (input, items, toneSel) => {
@@ -126,14 +152,14 @@
     localStorage.setItem('fs_history', JSON.stringify(list.slice(0,20)));
   };
 
-  // Generate
+  // ---- Generate ----
   const btn = document.getElementById('generate');
   const out = document.getElementById('output');
   const statusEl = document.getElementById('status');
 
   btn.addEventListener('click', async ()=>{
     const text = document.getElementById('text').value.trim();
-    if(!text) return alert('Paste a post first.');
+    if(!text) return alert('Paste a message first.');
 
     btn.disabled = true; btn.textContent = 'Thinking…';
     statusEl.textContent = 'Drafting comebacks…';
@@ -161,8 +187,9 @@
             div.classList.add('copied'); setTimeout(()=>div.classList.remove('copied'), 700);
           });
         });
-        // Save to local history
+        // Save history + increment visible meter
         saveHistory(text, items, tone);
+        bumpCount();
       }
       statusEl.textContent = '';
     } catch (e) {
