@@ -1,8 +1,8 @@
 // /api/generate.js
-// Tone-locked personas for extreme differentiation + quote cleanup + light rate limit.
+// Extreme tone personas + quote cleanup + light rate limit (no paywall enforcement here)
 
 const WINDOW_MS = 60 * 1000;   // 1 minute
-const MAX_REQUESTS = 12;       // per IP per minute
+const MAX_REQUESTS = 12;       // per IP per minute (soft guard)
 const buckets = new Map();     // in-memory (resets on cold start)
 
 function rateLimit(ip) {
@@ -32,10 +32,10 @@ export default async function handler(req, res) {
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "Use POST" });
 
-    // Rate limit
+    // Soft rate limit
     const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim()
             || req.socket?.remoteAddress || "unknown";
-    if (!rateLimit(ip)) return res.status(429).json({ error: "Too many requests. Try again in a few seconds." });
+    if (!rateLimit(ip)) return res.status(429).json({ error: "Too many requests. Try again shortly." });
 
     const { text, tone } = req.body || {};
     if (!text || !tone) return res.status(400).json({ error: "Missing text/tone" });
@@ -44,9 +44,9 @@ export default async function handler(req, res) {
 
     const system = `${persona}
 Rules:
-- Sound human. No generic “As an AI” phrasing.
+- Sound human. No “As an AI”.
 - Write THREE options, numbered 1–3.
-- Keep each 1–2 sentences, quotable, and distinct from each other.
+- Each 1–2 sentences, quotable, distinct from one another.
 - No emojis, no hashtags, no @mentions.
 - Avoid profanity and anything hateful. Be sharp without targeting protected classes.`;
 
@@ -60,7 +60,7 @@ Rules:
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",  // use whatever model you have access to
+        model: "gpt-4o-mini",   // use your available model
         messages: [
           { role: "system", content: system },
           { role: "user", content: user }
@@ -78,7 +78,7 @@ Rules:
     const data = await r.json();
     const raw = data.choices?.[0]?.message?.content || "";
 
-    // Clean into array
+    // Normalize to an array of clean lines
     const cleaned = raw
       .split(/\n/)
       .map(s => s.replace(/^\s*\d+\.\s*/, '').trim())
