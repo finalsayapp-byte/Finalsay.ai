@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "apis": {
+    "guardian": {
+      "type": "rest",
+      "base": "https://content.guardianapis.com/search",
+      "params": { "api-key": "${GUARDIAN_API_KEY}", "page-size": "10", "order-by": "newest", "show-fields": "trailText" }
+    },
+    "nyt": {
+      "type": "rest",
+      "base": "https://api.nytimes.com/svc/search/v2/articlesearch.json",
+      "params": { "api-key": "${NYT_API_KEY}" }
+    },
+    "congress": {
+      "type": "rest",
+      "base": "https://api.congress.gov/v3/bill",
+      "params": { "api_key": "${CONGRESS_API_KEY}", "format": "json" }
+    },
+    "govinfo": {
+      "type": "rest",
+      "base": "https://api.govinfo.gov/collections/USCODE",
+      "params": { "api_key": "${GOVINFO_API_KEY}" }
+    },
+    "fred": {
+      "type": "rest",
+      "base": "https://api.stlouisfed.org/fred/series/search",
+      "params": { "api_key": "${FRED_API_KEY}", "limit": "10" }
+    },
+    "nasa": {
+      "type": "rest",
+      "base": "https://images-api.nasa.gov/search",
+      "params": { "api_key": "${NASA_API_KEY}", "media_type": "image" }
+    },
+    "nps": {
+      "type": "rest",
+      "base": "https://developer.nps.gov/api/v1/parks",
+      "params": { "api_key": "${NPS_API_KEY}", "limit": "10" }
+    },
+    "openweather": {
+      "type": "rest",
+      "base": "https://api.openweathermap.org/data/2.5/weather",
+      "params": { "appid": "${OPENWEATHER_API_KEY}" }
+    },
+
+    /* --- Free medical & legal (no keys) --- */
+    "pubmed": {
+      "type": "rest",
+      "base": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
+      "params": { "db": "pubmed", "retmode": "json", "retmax": "10" }
+    },
+    "who": {
+      "type": "odata",
+      "base": "https://ghoapi.azureedge.net/ghoapi/api/",
+      "params": {}
+    },
+    "medlineplus": {
+      "type": "site",
+      "base": "https://medlineplus.gov/search/?query="
+    },
+    "courtlistener": {
+      "type": "rest",
+      "base": "https://www.courtlistener.com/api/rest/v3/search/",
+      "params": { "type": "o", "order_by": "score desc" }
+    },
+    "lii": {
+      "type": "site",
+      "base": "https://www.law.cornell.edu/search/site/"
+    }
+  },
+
+  "whitelists": {
+    "news": ["theguardian.com","nytimes.com"],
+    "legal": ["courtlistener.com","law.cornell.edu","congress.gov","govinfo.gov"],
+    "medical": ["pubmed.ncbi.nlm.nih.gov","who.int","medlineplus.gov"],
+    "econ": ["stlouisfed.org"],
+    "science": ["nasa.gov"]
+  },
+
+  "personas": {
+    "Medical Expert": {
+      "use": ["pubmed","who","medlineplus"],
+      "whitelist": "medical",
+      "query": "${topic}"
+    },
+    "Legal Advisor": {
+      "use": ["courtlistener","lii","congress","govinfo"],
+      "whitelist": "legal",
+      "query": "${topic}"
+    },
+    "Economist": {
+      "use": ["fred"],
+      "whitelist": "econ",
+      "query": "${topic}"
+    },
+    "Science Explainer": {
+      "use": ["nasa"],
+      "whitelist": "science",
+      "query": "${topic}"
+    },
+    "Fact Checker": {
+      "use": ["guardian","nyt"],
+      "whitelist": "news",
+      "query": "${topic}"
+    },
+    "Outdoors": {
+      "use": ["nps","openweather"],
+      "whitelist": "",
+      "query": "${topic}"
+    },
+    "General": {
+      "use": ["guardian","nyt","fred","nasa","pubmed","courtlistener"],
+      "whitelist": "",
+      "query": "${topic}"
+    }
+  }
+}
