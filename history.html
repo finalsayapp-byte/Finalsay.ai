@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>History — FinalSay.ai</title>
+<style>
+  :root{
+    --bg:#0f0f12; --panel:#17171c; --line:#2a2a36; --text:#eef; --muted:#a8a8b6;
+    --accent:#ff5c5c; --accent2:#ff7a7a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:Inter, Arial, Helvetica, sans-serif; background:var(--bg); color:var(--text)}
+  .wrap{max-width:980px; margin:0 auto; padding:20px}
+  header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px}
+  .logo{display:block; width:200px; max-width:55vw}
+  .nav a{background:#21212a; color:#fff; border:1px solid var(--line); padding:10px 12px; border-radius:10px; text-decoration:none; font-weight:800; margin-left:8px}
+  .nav a:hover{border-color:#3a3a46}
+  h1{font-size:clamp(22px,4.5vw,30px); margin:10px 0 8px}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:14px}
+  .hint{color:var(--muted); font-size:12px}
+  .meta{color:var(--muted); font-size:12px; margin-bottom:6px}
+  .input{font-size:14px; color:#d6d6e8; margin:8px 0}
+  .reply{background:#1b1b23; border:1px solid var(--line); margin:8px 0; padding:10px; border-radius:10px; cursor:pointer}
+  .reply:hover{background:#23232c}
+  .reply.copied{outline:2px solid var(--accent)}
+  .row{display:flex; gap:10px; flex-wrap:wrap; margin:10px 0}
+  .btn{background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; border:none; padding:10px 14px; border-radius:10px; font-weight:900; text-decoration:none; cursor:pointer}
+  footer{margin:26px 0 20px; text-align:center; color:var(--muted); font-size:14px}
+  footer a{color:#ff7a7a; text-decoration:none; margin:0 6px}
+  footer a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <!-- Wordmark -->
+      <svg class="logo" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg" aria-label="FinalSay.ai">
+        <defs>
+          <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#ff5c5c"/>
+            <stop offset="100%" stop-color="#ff9a7a"/>
+          </linearGradient>
+        </defs>
+        <text x="0" y="82" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="72" fill="url(#g2)">
+          FinalSay.ai
+        </text>
+      </svg>
+      <div class="nav">
+        <a href="/">← Back to Main</a>
+      </div>
+    </header>
+
+    <h1>Your History</h1>
+    <div class="hint">These items are saved on this device only. Tap any reply to copy.</div>
+
+    <div id="list"></div>
+
+    <div class="row">
+      <button id="clear" class="btn">Clear History</button>
+      <a class="btn" href="/">Return to Main</a>
+    </div>
+
+    <footer>
+      <a href="/privacy.html">Privacy Policy</a> |
+      <a href="/terms.html">Terms of Use</a>
+    </footer>
+  </div>
+
+<script>
+  const listEl = document.getElementById('list');
+
+  function render(){
+    const data = JSON.parse(localStorage.getItem('fs_history')||'[]');
+    listEl.innerHTML = '';
+    if(!data.length){
+      listEl.innerHTML = `<div class="card"><div class="hint">No history yet. Generate some replies and they’ll show up here.</div></div>`;
+      return;
+    }
+    data.forEach(item=>{
+      const card = document.createElement('div'); card.className='card';
+      const when = new Date(item.ts).toLocaleString();
+      card.innerHTML = `
+        <div class="meta">${when} • Tone: <strong>${item.tone || '—'}</strong></div>
+        <div class="input">${(item.input||'').replace(/</g,'&lt;')}</div>
+      `;
+      (item.items || []).forEach(txt=>{
+        const d = document.createElement('div'); d.className='reply';
+        d.textContent = txt;
+        d.onclick = async ()=>{ await navigator.clipboard.writeText(txt); d.classList.add('copied'); setTimeout(()=>d.classList.remove('copied'),700); };
+        card.appendChild(d);
+      });
+      listEl.appendChild(card);
+    });
+  }
+
+  document.getElementById('clear').onclick = ()=>{
+    if(confirm('Clear all saved history on this device?')){ localStorage.removeItem('fs_history'); render(); }
+  };
+
+  render();
+</script>
+</body>
+</html>
