@@ -240,21 +240,15 @@
     }
   });
 
-  // ---- OCR (client-side, with drag & drop + photo library + camera) ----
+  // ---- OCR (client-side, drag & drop + photo library + camera) ----
   const uploader = document.getElementById('uploader');
   const filePhotos = document.getElementById('filePhotos');   // opens photo library
   const fileCamera = document.getElementById('fileCamera');   // opens camera (mobile)
   const ocrStatus = document.getElementById('ocrStatus');
   const ocrFill = document.getElementById('ocrFill');
 
-  // Open pickers when labels clicked handled by browser
-
-  filePhotos.addEventListener('change', ()=>{
-    if(filePhotos.files && filePhotos.files[0]) handleFile(filePhotos.files[0]);
-  });
-  fileCamera.addEventListener('change', ()=>{
-    if(fileCamera.files && fileCamera.files[0]) handleFile(fileCamera.files[0]);
-  });
+  filePhotos.addEventListener('change', ()=>{ if(filePhotos.files?.[0]) handleFile(filePhotos.files[0]); });
+  fileCamera.addEventListener('change', ()=>{ if(fileCamera.files?.[0]) handleFile(fileCamera.files[0]); });
 
   ;['dragenter','dragover'].forEach(evt=>{
     uploader.addEventListener(evt, e=>{ e.preventDefault(); e.stopPropagation(); uploader.classList.add('drag'); ocrStatus.textContent = 'Drop image to extract text…'; });
@@ -267,20 +261,51 @@
     if(file) handleFile(file);
   });
 
+  // Resize very large images before OCR (faster + fewer mobile memory issues)
+  async function preprocessImage(file, maxW = 1800, maxH = 1800){
+    const img = document.createElement('img');
+    const fr = new FileReader();
+    const loaded = new Promise((resolve, reject)=>{
+      img.onload = ()=>resolve();
+      img.onerror = reject;
+    });
+    const read = new Promise((resolve)=>{ fr.onload = ()=>{ img.src = fr.result; resolve(); }; fr.readAsDataURL(file); });
+    await read; await loaded;
+
+    const { width:w, height:h } = img;
+    let nw = w, nh = h;
+    const scale = Math.min(1, maxW/w, maxH/h);
+    if (scale < 1) { nw = Math.round(w*scale); nh = Math.round(h*scale); }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = nw; canvas.height = nh;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, nw, nh);
+
+    const blob = await new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/jpeg', 0.9));
+    return new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type:'image/jpeg' });
+  }
+
   async function handleFile(file){
     if(!file || !file.type.startsWith('image/')) return alert('Please choose an image file.');
     ocrStatus.textContent = `Reading text from ${file.name}…`;
     ocrFill.style.width = '0%';
 
     try {
-      const worker = await Tesseract.createWorker('eng', 1, {
-        logger: m=>{
-          if(m.status === 'recognizing text' && m.progress != null){
-            ocrFill.style.width = Math.round(m.progress*100) + '%';
-          }
+      // Downscale huge images (screenshots are fine; photos can be massive)
+      const prepped = (file.size > 2_000_000) ? await preprocessImage(file) : file;
+
+      // Proper Tesseract init sequence (most compatible across mobile/desktop)
+      const worker = await Tesseract.createWorker({ logger: m=>{
+        if(m.status === 'recognizing text' && m.progress != null){
+          ocrFill.style.width = Math.round(m.progress*100) + '%';
         }
-      });
-      const { data: { text } } = await worker.recognize(file);
+      }});
+      await worker.load();
+      await worker.loadLanguage('eng');
+      await worker.initialize('eng');
+
+      const { data: { text } } = await worker.recognize(prepped);
       await worker.terminate();
 
       const trimmed = (text || '').replace(/\s+\n/g,'\n').trim();
