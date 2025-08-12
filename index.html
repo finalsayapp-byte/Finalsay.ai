@@ -1,68 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>FinalSay.ai — Get the Last Word</title>
+<title>FinalSay.ai — Choose Your Mode</title>
 <style>
-  :root{
-    --bg:#0f0f12; --panel:#17171c; --line:#2a2a36; --text:#eef; --muted:#a8a8b6;
-    --accent:#ff5c5c; --accent2:#ff7a7a; --hint:#20202a;
-  }
-  *{box-sizing:border-box}
-  body{margin:0; font-family:Inter, Arial, Helvetica, sans-serif; background:var(--bg); color:var(--text)}
-  .wrap{max-width:980px; margin:0 auto; padding:20px}
-  header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px}
-  .logo{display:block; width:220px; max-width:60vw}
-  .nav{display:flex; gap:10px; flex-wrap:wrap}
-  .nav a{background:#21212a; color:#fff; border:1px solid var(--line); padding:10px 12px; border-radius:10px; text-decoration:none; font-weight:800}
-  .nav a:hover{border-color:#3a3a46}
-  h1{font-size:clamp(22px,4.5vw,30px); margin:10px 0 8px}
-  .container{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px}
-  .callout{
-    display:flex; gap:10px; align-items:flex-start; margin:6px 0 14px;
-    background:var(--hint); border:1px solid var(--line); border-radius:12px; padding:12px;
-  }
-  .callout b{color:#fff}
-  .callout .icon{font-size:18px; line-height:1.1}
-  label{display:block; margin:12px 0 6px}
-  textarea{width:100%; min-height:150px; background:#1e1e26; color:#eef; border:1px solid var(--line); border-radius:10px; padding:12px; font-size:16px; outline:none}
-  .tones{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0}
-  .tone{padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#21212a; color:#eee; cursor:pointer; font-weight:800; font-size:13px}
-  .tone.active{background:linear-gradient(90deg,var(--accent),var(--accent2)); border-color:transparent}
-  .actions{display:flex; gap:10px; margin:14px 0; flex-wrap:wrap}
-  .btn{flex:1; background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; border:none; padding:12px; border-radius:10px; font-weight:900; cursor:pointer; box-shadow:0 8px 24px rgba(255,92,92,.35)}
-  .btn:disabled{opacity:.6; cursor:not-allowed}
-  .hint{color:var(--muted); font-size:12px}
-  .reply{background:#1b1b23; border:1px solid var(--line); margin:10px 0; padding:12px; border-radius:10px; cursor:pointer}
-  .reply:hover{background:#23232c}
-  .reply.copied{outline:2px solid var(--accent)}
-  .examples{margin-top:18px; border-top:1px dashed var(--line); padding-top:12px}
-  .exline{margin:8px 0; font-size:14px}
-  .exlabel{display:inline-block; min-width:170px; color:#ffa8a8}
-  .meter{margin-top:14px; display:flex; align-items:center; gap:10px}
-  .bar{flex:1; height:10px; background:#22232b; border:1px solid var(--line); border-radius:999px; overflow:hidden}
-  .fill{height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent2))}
-  .count{font-size:12px; color:#d8d8e4; min-width:160px; text-align:right}
-  footer{margin:26px 0 20px; text-align:center; color:#a8a8b6; font-size:14px}
-  footer a{color:#ff7a7a; text-decoration:none; margin:0 6px}
+  :root{--bg:#0f0f12;--panel:#17171c;--line:#2a2a36;--text:#eef;--muted:#a8a8b6;--accent:#ff5c5c;--accent2:#ff7a7a}
+  *{box-sizing:border-box} body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+  .wrap{max-width:980px;margin:0 auto;padding:24px}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .logo{display:block;width:220px;max-width:60vw}
+  .nav{display:flex;gap:10px;flex-wrap:wrap}
+  .nav a{background:#21212a;color:#fff;border:1px solid var(--line);padding:10px 12px;border-radius:10px;text-decoration:none;font-weight:800}
+  h1{font-size:clamp(22px,4.5vw,30px);margin:10px 0 8px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:10px}
+  .card h2{margin:0 0 6px 0;font-size:20px}
+  .card p{margin:0;color:var(--muted)}
+  .btn{margin-top:auto;display:inline-block;text-align:center;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:none;padding:12px 14px;border-radius:10px;font-weight:900;text-decoration:none;box-shadow:0 8px 24px rgba(255,92,92,.35)}
+  footer{margin:26px 0 12px;text-align:center;color:var(--muted);font-size:14px}
+  footer a{color:#ff7a7a;text-decoration:none;margin:0 6px}
   footer a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <!-- Wordmark -->
       <svg class="logo" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg" aria-label="FinalSay.ai">
-        <defs>
-          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#ff5c5c"/>
-            <stop offset="100%" stop-color="#ff9a7a"/>
-          </linearGradient>
-        </defs>
-        <text x="0" y="82" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="72" fill="url(#g)">
-          FinalSay.ai
-        </text>
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#ff5c5c"/><stop offset="100%" stop-color="#ff9a7a"/></linearGradient></defs>
+        <text x="0" y="82" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="72" fill="url(#g)">FinalSay.ai</text>
       </svg>
       <nav class="nav">
         <a href="/history.html">History</a>
@@ -71,144 +38,23 @@
       </nav>
     </header>
 
-    <div class="container">
-      <h1>Paste a message. Pick a voice. Drop a mic.</h1>
-      <div class="callout">
-        <div class="icon">💡</div>
-        <div><b>Paste any message, post, or comment to get instant, human‑sounding replies in any voice.</b></div>
+    <h1>Choose your mode</h1>
+    <div class="grid">
+      <div class="card">
+        <h2>Simple Reply</h2>
+        <p>Paste a message and get 3 punchy comebacks in a chosen voice. Fast, quotable, and perfect for screenshots.</p>
+        <a class="btn" href="/simple.html">Open Simple</a>
       </div>
-      <div class="hint">You’ll get 3 sharp, quotable replies. Tap to copy. Your history is saved on this device.</div>
-
-      <label for="text">Paste the message you want to reply to</label>
-      <textarea id="text" placeholder="Paste the message, post, or comment here… (1–3 sentences works best)"></textarea>
-
-      <label>Choose a voice</label>
-      <div class="tones" id="tones">
-        <button class="tone active" data-tone="Savage">Savage 🔥</button>
-        <button class="tone" data-tone="Witty & Sarcastic">Witty & Sarcastic 😏</button>
-        <button class="tone" data-tone="Inspirational & Profound">Inspirational & Profound 🌌</button>
-        <button class="tone" data-tone="Playful Roast">Playful Roast 😂</button>
-        <button class="tone" data-tone="Petty & Precise">Petty & Precise ✂️</button>
-        <button class="tone" data-tone="Diplomatic Assassin">Diplomatic Assassin 🕊️</button>
-        <button class="tone" data-tone="Chaotic Genius">Chaotic Genius 🌀</button>
-      </div>
-
-      <div class="actions">
-        <button id="generate" class="btn">Generate Replies</button>
-      </div>
-      <div id="status" class="hint"></div>
-
-      <div id="output"></div>
-
-      <!-- Usage meter -->
-      <div class="meter" aria-live="polite">
-        <div class="bar"><div id="fill" class="fill"></div></div>
-        <div id="counter" class="count">0 / 10 free today</div>
-      </div>
-
-      <!-- Example tone outputs -->
-      <div class="examples" id="examples">
-        <div class="hint">Example (same message, 7 voices)</div>
-        <div class="exline"><span class="exlabel">Message:</span> “Some people just don’t get it. Simplicity is the key to genius.”</div>
-        <div class="exline"><span class="exlabel">Savage:</span> Genius? You’re still trying to unlock the shopping cart at Aldi.</div>
-        <div class="exline"><span class="exlabel">Witty & Sarcastic:</span> Ah yes, the eternal wisdom of fridge-magnet philosophy.</div>
-        <div class="exline"><span class="exlabel">Inspirational & Profound:</span> True genius is the courage to keep the simple honest without making it small.</div>
-        <div class="exline"><span class="exlabel">Playful Roast:</span> Did Confucius DM you that, or did a fortune cookie hit “send” again?</div>
-        <div class="exline"><span class="exlabel">Petty & Precise:</span> Odd mantra for someone who filed three paragraphs to define “simple.”</div>
-        <div class="exline"><span class="exlabel">Diplomatic Assassin:</span> I respect the premise; without context, though, simplicity often reads like neglect.</div>
-        <div class="exline"><span class="exlabel">Chaotic Genius:</span> If simplicity’s the key, why did Da Vinci keep misplacing it in 7,000 doodles?</div>
+      <div class="card">
+        <h2>Advanced Reply</h2>
+        <p>Long, nuanced responses with “equalizer” sliders: political lens, science↔spiritual, heat, empathy, humor, and more.</p>
+        <a class="btn" href="/advanced.html">Open Advanced</a>
       </div>
     </div>
 
     <footer>
-      <a href="/privacy.html">Privacy Policy</a> |
-      <a href="/terms.html">Terms of Use</a>
+      <a href="/privacy.html">Privacy</a> | <a href="/terms.html">Terms</a>
     </footer>
   </div>
-
-<script>
-  // ---- Tone pills ----
-  let tone = "Savage"; // default voice on load
-  document.getElementById('tones').addEventListener('click', (e)=>{
-    if(!e.target.classList.contains('tone')) return;
-    document.querySelectorAll('.tone').forEach(b=>b.classList.remove('active'));
-    e.target.classList.add('active');
-    tone = e.target.dataset.tone;
-  });
-
-  // ---- Usage meter (local only, resets at midnight) ----
-  const DAILY_LIMIT = 10; // visible only; not enforced yet
-  function todayKey(){
-    const d = new Date(); // local time
-    return `fs_uses_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
-  function getCount(){ return Number(localStorage.getItem(todayKey())||0); }
-  function bumpCount(){ const k=todayKey(); const v=getCount()+1; localStorage.setItem(k, String(v)); refreshMeter(); }
-  function refreshMeter(){
-    const used = getCount();
-    const pct = Math.min(100, Math.round((used/DAILY_LIMIT)*100));
-    document.getElementById('fill').style.width = pct + '%';
-    document.getElementById('counter').textContent = `${used} / ${DAILY_LIMIT} free today`;
-  }
-  refreshMeter();
-
-  // ---- Helpers ----
-  const stripOuterQuotes = s => s.replace(/^["“”'`]+|["“”'`]+$/g,'');
-  const cleanLine = s => stripOuterQuotes(s.replace(/^\s*\d+\.\s*/, '').trim());
-  const saveHistory = (input, items, toneSel) => {
-    const entry = { ts: Date.now(), tone: toneSel, input, items };
-    const list = JSON.parse(localStorage.getItem('fs_history')||'[]');
-    list.unshift(entry);
-    localStorage.setItem('fs_history', JSON.stringify(list.slice(0,20)));
-  };
-
-  // ---- Generate ----
-  const btn = document.getElementById('generate');
-  const out = document.getElementById('output');
-  const statusEl = document.getElementById('status');
-
-  btn.addEventListener('click', async ()=>{
-    const text = document.getElementById('text').value.trim();
-    if(!text) return alert('Paste a message first.');
-
-    btn.disabled = true; btn.textContent = 'Thinking…';
-    statusEl.textContent = 'Drafting comebacks…';
-    out.innerHTML = '';
-
-    try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json' },
-        body: JSON.stringify({ text, tone })
-      });
-      const data = await res.json();
-      if(!res.ok) throw new Error(data.error || 'Error');
-
-      let items = Array.isArray(data.replies) ? data.replies : String(data.replies).split(/\n/);
-      items = items.map(cleanLine).filter(Boolean);
-
-      if(!items.length){
-        out.innerHTML = `<div class="reply">No replies generated. Try rephrasing or a different voice.</div>`;
-      } else {
-        out.innerHTML = items.map(r => `<div class="reply">${r.replace(/</g,'&lt;')}</div>`).join('');
-        Array.from(out.querySelectorAll('.reply')).forEach(div=>{
-          div.addEventListener('click', async ()=>{
-            await navigator.clipboard.writeText(div.textContent);
-            div.classList.add('copied'); setTimeout(()=>div.classList.remove('copied'), 700);
-          });
-        });
-        // Save history + increment visible meter
-        saveHistory(text, items, tone);
-        bumpCount();
-      }
-      statusEl.textContent = '';
-    } catch (e) {
-      out.innerHTML = `<div class="reply">Error: ${e.message}</div>`;
-      statusEl.textContent = 'Try again in a moment.';
-    } finally {
-      btn.disabled = false; btn.textContent = 'Generate Replies';
-    }
-  });
-</script>
 </body>
 </html>
