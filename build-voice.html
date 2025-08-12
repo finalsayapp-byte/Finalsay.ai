@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FinalSay.ai — Build Your Voice</title>
+<style>
+  :root{--bg:#0f0f12;--panel:#17171c;--line:#2a2a36;--text:#eef;--muted:#a8a8b6;--accent:#ff5c5c;--accent2:#ff7a7a}
+  *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);color:var(--text)}
+  .wrap{max-width:980px;margin:0 auto;padding:20px}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .logo{display:block;width:220px;max-width:60vw}
+  .nav{display:flex;gap:10px;flex-wrap:wrap}
+  .nav a{background:#21212a;color:#fff;border:1px solid var(--line);padding:10px 12px;border-radius:10px;text-decoration:none;font-weight:800}
+  h1{font-size:clamp(22px,4.5vw,30px);margin:10px 0}
+  .container{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:860px){ .row{grid-template-columns:1fr} }
+  .card{background:#1b1b23;border:1px solid var(--line);border-radius:12px;padding:14px}
+  .q{margin:10px 0}
+  .q label{display:block;margin-bottom:6px;font-weight:700}
+  select,input[type="range"],input[type="text"]{width:100%;background:#1e1e26;color:#eef;border:1px solid var(--line);border-radius:10px;padding:10px}
+  .btn{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:none;padding:12px 14px;border-radius:10px;font-weight:900;cursor:pointer}
+  .btn.ghost{background:#21212a;border:1px solid var(--line)}
+  .hint{color:var(--muted);font-size:12px}
+  .preview{white-space:pre-wrap;background:#101017;border:1px dashed var(--line);padding:12px;border-radius:10px;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a href="/"><svg class="logo" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff5c5c"/><stop offset="100%" stop-color="#ff7a7a"/></linearGradient></defs><text x="0" y="82" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="72" fill="url(#g)">FinalSay.ai</text></svg></a>
+    <nav class="nav">
+      <a href="/">Modes</a>
+      <a href="/advanced.html">Advanced</a>
+      <a href="/favorites.html">Favorites</a>
+      <a href="/history.html">History</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/terms.html">Terms</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <h1>Build Your Voice</h1>
+    <div class="hint">Answer a few questions. We’ll craft a personal voice you can save, star, and set as default. Everything is stored locally on this device.</div>
+
+    <div class="row">
+      <div class="card">
+        <h3>Quick Build (≈ 60 seconds)</h3>
+        <div class="q"><label>Directness</label><input id="qb_direct" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Warmth</label><input id="qb_warm" type="range" min="1" max="7" value="5"></div>
+        <div class="q"><label>Formality</label><input id="qb_form" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Humor</label><input id="qb_humor" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Confrontation</label><input id="qb_conf" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Empathy</label><input id="qb_empathy" type="range" min="1" max="7" value="5"></div>
+        <div class="q"><label>Optimism</label><input id="qb_opt" type="range" min="1" max="7" value="5"></div>
+        <div class="q"><label>Science ↔ Spiritual</label><input id="qb_scispir" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Length</label><input id="qb_len" type="range" min="1" max="7" value="5"></div>
+        <button id="qb_make" class="btn">Make My Voice</button>
+      </div>
+
+      <div class="card">
+        <h3>Full Builder (≈ 5 minutes)</h3>
+        <div class="q"><label>Directness</label><input id="fb_q1" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Warmth</label><input id="fb_q2" type="range" min="1" max="7" value="5"></div>
+        <div class="q"><label>Formality</label><input id="fb_q3" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Humor</label><input id="fb_q4" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Sarcasm tolerance</label><input id="fb_q5" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Confrontation</label><input id="fb_q6" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Empathy</label><input id="fb_q7" type="range" min="1" max="7" value="5"></div>
+        <div class="q"><label>Optimism</label><input id="fb_q8" type="range" min="1" max="7" value="5"></div>
+        <div class="q"><label>Science ↔ Spiritual</label><input id="fb_q9" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Political tone (Left↔Right)</label><input id="fb_q10" type="range" min="0" max="100" value="50"></div>
+        <div class="q"><label>Heat (Zen↔Hot)</label><input id="fb_q11" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Authority</label><input id="fb_q12" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Evidence level</label><input id="fb_q13" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Length</label><input id="fb_q14" type="range" min="1" max="7" value="5"></div>
+        <div class="q"><label>Risk style</label><input id="fb_q15" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label><input id="fb_q16" type="checkbox"/> De-escalate by default</label></div>
+        <div class="q"><label><input id="fb_q17" type="checkbox"/> Call out BS</label></div>
+        <div class="q"><label><input id="fb_q18" type="checkbox"/> Mirror their words first</label></div>
+        <div class="q"><label><input id="fb_q19" type="checkbox"/> Ask a question before stating your point</label></div>
+        <div class="q"><label><input id="fb_q20" type="checkbox"/> Use story analogies when possible</label></div>
+        <div class="q"><label>Charm</label><input id="fb_q21" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Relatability</label><input id="fb_q22" type="range" min="1" max="7" value="4"></div>
+        <div class="q"><label>Mystery</label><input id="fb_q23" type="range" min="1" max="7" value="3"></div>
+        <div class="q"><label>Humility ↔ Flex</label><input id="fb_q24" type="range" min="1" max="7" value="4"></div>
+        <button id="fb_make" class="btn">Build Full Voice</button>
+      </div>
+    </div>
+
+    <div style="margin-top:14px" class="card">
+      <div class="q"><label>Name your voice</label><input id="vname" type="text" placeholder="e.g., Harry — Calm Sniper" /></div>
+      <div class="q"><label>Preview prompt (optional)</label><input id="vprompt" type="text" placeholder="Paste a message here to generate a sample reply…"/></div>
+      <div class="q"><button id="preview" class="btn ghost">Preview Voice on Prompt</button></div>
+      <div id="previewOut" class="preview" style="display:none"></div>
+      <div class="q" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button id="save" class="btn">Save Voice</button>
+        <button id="setDefault" class="btn ghost">Set as Default</button>
+        <button id="toAdvanced" class="btn ghost">Open in Advanced</button>
+      </div>
+      <div class="hint">Voices are stored locally on this device. You can favorite, export, and import them in Favorites.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const PROFILE_KEY='fs_custom_voices';
+  const DEFAULT_ID_KEY='fs_default_voice_id';
+
+  const slidersList=['politics','scispir','heat','formality','empathy','direct','humor','roast','optimism','length'];
+  let currentSliders = {politics:50,scispir:50,heat:40,formality:55,empathy:70,direct:65,humor:45,roast:35,optimism:60,length:75};
+  let currentIntents = [];
+
+  function f7(x){ return Math.round((Number(x)-1)/6*100); }
+
+  function clamp(v){ return Math.max(0, Math.min(100, v)); }
+
+  function setSliders(obj){ currentSliders = {...currentSliders, ...obj}; }
+
+  function qbBuild(){
+    const d=f7(qb_direct.value), w=f7(qb_warm.value), fo=f7(qb_form.value), hu=f7(qb_humor.value),
+          co=f7(qb_conf.value), em=f7(qb_empathy.value), op=f7(qb_opt.value),
+          ss=f7(qb_scispir.value), le=f7(qb_len.value);
+    setSliders({
+      direct:d, empathy:em, formality:fo, humor:hu,
+      roast:clamp(Math.round(0.6*co + 0.4*hu)),
+      heat:co, optimism:op, scispir:ss, politics:50, length:le
+    });
+    alert('Quick voice computed. Name it and Save (or Preview).');
+  }
+
+  function fbBuild(){
+    const v = id=>Number(document.getElementById(id).value);
+    const yes = id=>document.getElementById(id).checked;
+    const sliders={
+      direct: f7(v('fb_q1')),
+      empathy: f7(v('fb_q7')),
+      formality: f7(v('fb_q3')),
+      humor: f7(v('fb_q4')),
+      roast: clamp(Math.round(0.6*f7(v('fb_q5')) + 0.4*f7(v('fb_q6')))),
+      heat: f7(v('fb_q11')),
+      optimism: f7(v('fb_q8')),
+      scispir: f7(v('fb_q9')),
+      politics: clamp(v('fb_q10')),
+      length: f7(v('fb_q14')),
+    };
+    // Nuanced blends
+    const authority = f7(v('fb_q12'));
+    if(authority>66){ sliders.direct=clamp(sliders.direct+10); sliders.formality=clamp(sliders.formality+10); }
+    const evidence = f7(v('fb_q13'));
+    if(evidence>66){ currentIntents.push('Evidence dense'); }
+    const risk = f7(v('fb_q15'));
+    if(risk>66){ sliders.heat=clamp(sliders.heat+10); sliders.direct=clamp(sliders.direct+10); }
+    if(yes('fb_q16')){ sliders.heat=Math.min(sliders.heat,40); sliders.empathy=clamp(sliders.empathy+10); }
+    if(yes('fb_q17')){ sliders.roast=clamp(sliders.roast+10); sliders.direct=clamp(sliders.direct+10); }
+    if(yes('fb_q18')){ currentIntents.push('Defuse tension','Request clarity'); }
+    if(yes('fb_q19')){ currentIntents.push('Socratic'); }
+    if(yes('fb_q20')){ currentIntents.push('Story framing'); }
+    const charm=f7(v('fb_q21')); if(charm>66){ sliders.humor=clamp(sliders.humor+10); sliders.optimism=clamp(sliders.optimism+10); }
+    const relat=f7(v('fb_q22')); if(relat>66){ sliders.formality=clamp(sliders.formality-10); sliders.empathy=clamp(sliders.empathy+10); }
+    const mystery=f7(v('fb_q23')); if(mystery>66){ sliders.direct=clamp(sliders.direct-10); sliders.length=clamp(sliders.length+10); }
+    const flex=f7(v('fb_q24')); if(flex>66){ sliders.direct=clamp(sliders.direct+10); sliders.formality=clamp(sliders.formality+5); }
+    setSliders(sliders);
+    alert('Full voice computed. Name it and Save (or Preview).');
+  }
+
+  document.getElementById('qb_make').onclick=qbBuild;
+  document.getElementById('fb_make').onclick=fbBuild;
+
+  // Preview
+  document.getElementById('preview').onclick=async()=>{
+    const prompt = (document.getElementById('vprompt').value||'').trim();
+    if(!prompt) return alert('Enter a preview prompt first.');
+    const payload={ mode:'advanced', scenario:prompt, intentText:'Preview my custom voice.', intents:currentIntents, sliders:currentSliders };
+    try{
+      const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const data=await res.json();
+      const txt = Array.isArray(data.replies)?data.replies.join('\n\n'):String(data.replies||'');
+      const out=document.getElementById('previewOut'); out.style.display='block'; out.textContent=txt||'(No preview text returned.)';
+    }catch(e){
+      const out=document.getElementById('previewOut'); out.style.display='block'; out.textContent='Preview error: '+e.message;
+    }
+  };
+
+  // Save / default / open in Advanced
+  document.getElementById('save').onclick=()=>{
+    const name=(document.getElementById('vname').value||'').trim();
+    if(!name) return alert('Name your voice first.');
+    const id='voice_'+Date.now();
+    const profile={id,name,createdAt:Date.now(),sliders:currentSliders,intents:Array.from(new Set(currentIntents)),notes:'Built via wizard',stars:1};
+    const arr=JSON.parse(localStorage.getItem(PROFILE_KEY)||'[]'); arr.unshift(profile);
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(arr.slice(0,200)));
+    alert('Saved to Favorites.');
+  };
+  document.getElementById('setDefault').onclick=()=>{
+    const arr=JSON.parse(localStorage.getItem(PROFILE_KEY)||'[]');
+    if(!arr.length){ alert('Save your voice first.'); return; }
+    localStorage.setItem(DEFAULT_ID_KEY, arr[0].id);
+    alert('Default set to your most recent saved voice.');
+  };
+  document.getElementById('toAdvanced').onclick=()=>{
+    const arr=JSON.parse(localStorage.getItem(PROFILE_KEY)||'[]');
+    if(!arr.length){ return alert('Save your voice first.'); }
+    localStorage.setItem('fs_reopen_voice', JSON.stringify(arr[0]));
+    location.href='/advanced.html?loadVoice=1';
+  };
+</script>
+</body>
+</html>
