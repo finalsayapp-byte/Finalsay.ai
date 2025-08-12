@@ -11,22 +11,26 @@
   }
   *{box-sizing:border-box}
   html,body{height:100%}
-  body{margin:0;background:radial-gradient(1000px 700px at 80% 10%, #1b1b26 0%, var(--bg) 60%); color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;}
+  body{margin:0;background:radial-gradient(1000px 700px at 80% 10%, #1b1b26 0%, var(--bg) 60%);
+       color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;}
   .wrap{max-width:980px;margin:0 auto;padding:24px}
   header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-  .logo{display:flex;align-items:center;gap:10px;font-weight:800}
-  .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,59,106,.14);border:1px solid rgba(255,59,106,.35);color:var(--brand);font-size:12px}
+  .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,59,106,.14);
+         border:1px solid rgba(255,59,106,.35);color:var(--brand);font-size:12px;font-weight:800}
   h1{font-size:clamp(24px,4.5vw,36px);margin:8px 0 12px}
   .sub{color:var(--muted);margin-bottom:14px}
   .grid{display:grid;grid-template-columns:1fr;gap:16px}
   @media (min-width:900px){.grid{grid-template-columns:1.2fr .8fr}}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
-  textarea{width:100%;min-height:140px;background:#12121b;color:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:15px;outline:none;resize:vertical}
+  textarea{width:100%;min-height:140px;background:#12121b;color:#fff;border:1px solid var(--line);
+           border-radius:12px;padding:12px;font-size:15px;outline:none;resize:vertical}
   .tones{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-  .tone{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#131321;color:#eaeaf4;cursor:pointer;font-weight:600;font-size:13px}
+  .tone{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#131321;color:#eaeaf4;
+        cursor:pointer;font-weight:700;font-size:13px}
   .tone.active{background:linear-gradient(90deg,var(--brand),var(--brand-2)); border-color:transparent; color:#fff}
   .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-  button.primary{background:var(--brand);border:none;color:#fff;font-weight:800;padding:12px 16px;border-radius:12px;cursor:pointer;box-shadow:0 10px 28px rgba(255,59,106,.3)}
+  button.primary{background:var(--brand);border:none;color:#fff;font-weight:800;padding:12px 16px;border-radius:12px;
+                 cursor:pointer;box-shadow:0 10px 28px rgba(255,59,106,.3)}
   .hint{color:var(--muted);font-size:12px;margin-top:8px}
   .replies{margin-top:8px}
   .reply{padding:12px;border:1px solid var(--line);background:#141422;border-radius:12px;margin:8px 0;cursor:pointer}
@@ -35,15 +39,14 @@
   .history-item{padding:12px;border:1px dashed var(--line);border-radius:12px;margin:10px 0}
   footer{margin-top:24px;color:var(--muted);font-size:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
   a{color:#e2e2ff}
+  strong{font-weight:800}
 </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <div class="logo">
-        <span class="badge">FinalSay.ai</span>
-      </div>
-      <div style="font-size:12px;color:var(--muted)">MVP • v0.1</div>
+      <span class="badge">FinalSay.ai</span>
+      <div style="font-size:12px;color:var(--muted)">MVP • v0.2</div>
     </header>
 
     <h1>Paste a post. Pick a tone. Drop a mic.</h1>
@@ -72,7 +75,7 @@
         <div id="out" class="replies" style="display:none">
           <div class="title">Your Final Says</div>
           <div id="replies"></div>
-          <div class="hint">Tip: tap any reply to copy. Generate again to get a fresh set.</div>
+          <div class="hint">Tip: tap any reply to copy. Generate again for a fresh set.</div>
         </div>
       </section>
 
@@ -94,6 +97,7 @@
   </div>
 
 <script>
+  // --- Tone selection ---
   const tonesEl = document.getElementById('tones');
   let tone = "Witty";
   tonesEl.addEventListener('click', (e)=>{
@@ -104,12 +108,25 @@
     }
   });
 
-  const go = document.getElementById('go');
-  const out = document.getElementById('out');
-  const replies = document.getElementById('replies');
-  const statusEl = document.getElementById('status');
-  const histEl = document.getElementById('history');
+  // --- Helpers: clean quotes & highlight keywords ---
+  function stripOuterQuotes(s){
+    return s.replace(/^["“”'`]+|["“”'`]+$/g,'');
+  }
+  const highlightWords = [
+    'facts','evidence','nuance','logic','truth','reality','data','receipts',
+    'accountability','context','source','sources','final say','finalsay'
+  ];
+  function highlight(text){
+    let out = text;
+    highlightWords.forEach(w=>{
+      const re = new RegExp(`\\b(${w.replace(/[-/\\^$*+?.()|[\]{}]/g,'\\$&')})\\b`,`gi`);
+      out = out.replace(re,'<strong>$1</strong>');
+    });
+    return out;
+  }
 
+  // --- History ---
+  const histEl = document.getElementById('history');
   function addToHistory(input, items){
     const entry = { ts: Date.now(), input, items };
     const list = JSON.parse(localStorage.getItem('fs_history')||'[]');
@@ -117,33 +134,43 @@
     localStorage.setItem('fs_history', JSON.stringify(list.slice(0,10)));
     renderHistory();
   }
-
   function renderHistory(){
     const list = JSON.parse(localStorage.getItem('fs_history')||'[]');
     histEl.innerHTML = '';
-    list.forEach((it,idx)=>{
+    list.forEach((it)=>{
       const box = document.createElement('div');
       box.className = 'history-item';
       const date = new Date(it.ts).toLocaleString();
       box.innerHTML = `<div class="hint">${date}</div>
       <div style="font-size:13px;color:#d6d6e6;margin:6px 0">${it.input.replace(/</g,"&lt;")}</div>`;
       it.items.forEach(txt=>{
-        const d = document.createElement('div'); d.className='reply'; d.textContent = txt;
-        d.onclick = async ()=>{ await navigator.clipboard.writeText(txt); d.classList.add('copied'); setTimeout(()=>d.classList.remove('copied'),600); };
+        const d = document.createElement('div'); d.className='reply';
+        d.innerHTML = highlight(txt.replace(/</g,"&lt;"));
+        d.onclick = async ()=>{
+          // Copy plain text (no tags)
+          const plain = d.textContent;
+          await navigator.clipboard.writeText(plain);
+          d.classList.add('copied'); setTimeout(()=>d.classList.remove('copied'),700);
+        };
         box.appendChild(d);
       });
       histEl.appendChild(box);
     });
   }
-
   renderHistory();
   document.getElementById('yr').textContent = new Date().getFullYear();
+
+  // --- Generate replies ---
+  const go = document.getElementById('go');
+  const out = document.getElementById('out');
+  const repliesWrap = document.getElementById('replies');
+  const statusEl = document.getElementById('status');
 
   go.onclick = async () => {
     const text = document.getElementById('text').value.trim();
     if (!text) return alert("Paste a post first.");
     go.disabled = true; go.textContent = "Thinking…"; statusEl.textContent = "Drafting comebacks…";
-    replies.innerHTML = ""; out.style.display = "block";
+    repliesWrap.innerHTML = ""; out.style.display = "block";
 
     try {
       const r = await fetch("/api/generate", {
@@ -153,32 +180,37 @@
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || "Error");
 
-      const items = data.replies
-        .split(/\n/)
-        .map(s=>s.replace(/^\s*\d+\.\s*/,'').trim())
+      // Accept either array or newline string
+      let items = Array.isArray(data.replies) ? data.replies : data.replies.split(/\n/);
+      items = items
+        .map(s=>s.replace(/^\s*\d+\.\s*/,'').trim())   // remove "1. "
+        .map(stripOuterQuotes)                         // remove outer quotes
         .filter(Boolean);
 
       items.forEach(txt=>{
         const div = document.createElement('div');
-        div.className = "reply"; div.textContent = txt;
-        div.onclick = async ()=>{ await navigator.clipboard.writeText(txt); div.classList.add('copied'); setTimeout(()=>div.classList.remove('copied'),600); };
-        replies.appendChild(div);
+        div.className = "reply";
+        div.innerHTML = highlight(txt.replace(/</g,"&lt;")); // show with bold highlights
+        div.onclick = async ()=>{
+          await navigator.clipboard.writeText(div.textContent); // copy plain text (no quotes or tags)
+          div.classList.add('copied'); setTimeout(()=>div.classList.remove('copied'),700);
+        };
+        repliesWrap.appendChild(div);
       });
 
       addToHistory(text, items);
       statusEl.textContent = "";
     } catch (e) {
-      replies.innerHTML = `<div class="reply">Error: ${e.message}</div>`;
+      repliesWrap.innerHTML = `<div class="reply">Error: ${e.message}</div>`;
       statusEl.textContent = "Try again in a moment.";
     } finally {
       go.disabled = false; go.textContent = "Generate Replies";
     }
   };
 
-  // Clear history link
+  // Footer actions
   document.getElementById('clear').onclick = (e)=>{ e.preventDefault(); localStorage.removeItem('fs_history'); renderHistory(); };
-  // Placeholder privacy
-  document.getElementById('privacy').onclick = (e)=>{ e.preventDefault(); alert("MVP note: Replies are generated via serverless API. We don't log your text in the browser. Add full Privacy Policy before launch."); };
+  document.getElementById('privacy').onclick = (e)=>{ e.preventDefault(); alert("MVP note: We process your text via a serverless API to generate replies. Add a full Privacy Policy before launch."); };
 </script>
 </body>
 </html>
