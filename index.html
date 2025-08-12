@@ -24,8 +24,9 @@
   .tones{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0}
   .tone{padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#21212a; color:#eee; cursor:pointer; font-weight:800; font-size:13px}
   .tone.active{background:linear-gradient(90deg,var(--accent),var(--accent2)); border-color:transparent}
-  .actions{display:flex; gap:10px; margin:14px 0}
+  .actions{display:flex; gap:10px; margin:14px 0; flex-wrap:wrap}
   .btn{flex:1; background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; border:none; padding:12px; border-radius:10px; font-weight:900; cursor:pointer; box-shadow:0 8px 24px rgba(255,92,92,.35)}
+  .btn.secondary{flex:0 0 auto; background:#21212a; border:1px solid var(--line)}
   .btn:disabled{opacity:.6; cursor:not-allowed}
   .hint{color:var(--muted); font-size:12px}
   .reply{background:#1b1b23; border:1px solid var(--line); margin:10px 0; padding:12px; border-radius:10px; cursor:pointer}
@@ -38,6 +39,15 @@
   .bar{flex:1; height:10px; background:#22232b; border:1px solid var(--line); border-radius:999px; overflow:hidden}
   .fill{height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent2))}
   .count{font-size:12px; color:#d8d8e4; min-width:160px; text-align:right}
+  /* OCR uploader */
+  .uploader{margin-top:12px; padding:14px; border:1px dashed var(--line); border-radius:12px; background:#1b1b23}
+  .uploader.drag{border-color:#ff9a7a; background:#20202a}
+  .uploader .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .uploader input[type=file]{display:none}
+  .uploader .pick{background:#21212a; border:1px solid var(--line); color:#fff; padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:800}
+  .ocr-status{margin-top:8px; font-size:12px; color:#d8d8e4}
+  .ocr-progress{height:8px; background:#22232b; border:1px solid var(--line); border-radius:999px; overflow:hidden; margin-top:6px}
+  .ocr-fill{height:100%; width:0%; background:linear-gradient(90deg,#ff9a7a,#ff5c5c)}
   footer{margin:26px 0 20px; text-align:center; color:var(--muted); font-size:14px}
   footer a{color:#ff7a7a; text-decoration:none; margin:0 6px}
   footer a:hover{text-decoration:underline}
@@ -71,6 +81,17 @@
 
       <label for="text">Paste the message you want to reply to</label>
       <textarea id="text" placeholder="Paste the message, post, or comment here… (1–3 sentences works best)"></textarea>
+
+      <!-- OCR Uploader -->
+      <div class="uploader" id="uploader">
+        <div class="row">
+          <label for="file" class="pick">Upload screenshot</label>
+          <input id="file" type="file" accept="image/*" />
+          <span class="hint">Or drag & drop a screenshot here — we’ll pull the text for you (processed on your device).</span>
+        </div>
+        <div class="ocr-status" id="ocrStatus">No image selected.</div>
+        <div class="ocr-progress"><div id="ocrFill" class="ocr-fill"></div></div>
+      </div>
 
       <label>Choose a voice</label>
       <div class="tones" id="tones">
@@ -115,6 +136,9 @@
       <a href="/terms.html">Terms of Use</a>
     </footer>
   </div>
+
+<!-- Tesseract.js (client-side OCR) -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
 
 <script>
   // ---- Tone pills ----
@@ -199,6 +223,63 @@
       btn.disabled = false; btn.textContent = 'Generate Replies';
     }
   });
+
+  // ---- OCR (client-side, with drag & drop) ----
+  const fileInput = document.getElementById('file');
+  const uploader = document.getElementById('uploader');
+  const ocrStatus = document.getElementById('ocrStatus');
+  const ocrFill = document.getElementById('ocrFill');
+
+  uploader.addEventListener('click', (e)=>{
+    if(e.target.classList.contains('pick')) fileInput.click();
+  });
+
+  fileInput.addEventListener('change', ()=>{
+    if(fileInput.files && fileInput.files[0]) handleFile(fileInput.files[0]);
+  });
+
+  ;['dragenter','dragover'].forEach(evt=>{
+    uploader.addEventListener(evt, e=>{ e.preventDefault(); e.stopPropagation(); uploader.classList.add('drag'); ocrStatus.textContent = 'Drop image to extract text…'; });
+  });
+  ;['dragleave','drop'].forEach(evt=>{
+    uploader.addEventListener(evt, e=>{ e.preventDefault(); e.stopPropagation(); uploader.classList.remove('drag'); });
+  });
+  uploader.addEventListener('drop', e=>{
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if(file) handleFile(file);
+  });
+
+  async function handleFile(file){
+    if(!file || !file.type.startsWith('image/')) return alert('Please choose an image file.');
+    ocrStatus.textContent = `Reading text from ${file.name}…`;
+    ocrFill.style.width = '0%';
+
+    try {
+      const worker = await Tesseract.createWorker('eng', 1, {
+        logger: m=>{
+          if(m.status === 'recognizing text' && m.progress != null){
+            ocrFill.style.width = Math.round(m.progress*100) + '%';
+          }
+        }
+      });
+      const { data: { text } } = await worker.recognize(file);
+      await worker.terminate();
+
+      const trimmed = (text || '').replace(/\s+\n/g,'\n').trim();
+      if(trimmed){
+        const ta = document.getElementById('text');
+        ta.value = trimmed;
+        ocrStatus.textContent = 'Text extracted. You can edit it above or generate replies now.';
+        // Smooth scroll to the textarea on mobile
+        ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        ocrStatus.textContent = 'No readable text detected. Try a clearer screenshot.';
+      }
+    } catch (err) {
+      console.error(err);
+      ocrStatus.textContent = 'OCR failed. Please try another image.';
+    }
+  }
 </script>
 </body>
 </html>
