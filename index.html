@@ -32,7 +32,6 @@
   .tone.active{background:linear-gradient(90deg,var(--accent),var(--accent2)); border-color:transparent}
   .actions{display:flex; gap:10px; margin:14px 0; flex-wrap:wrap}
   .btn{flex:1; background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; border:none; padding:12px; border-radius:10px; font-weight:900; cursor:pointer; box-shadow:0 8px 24px rgba(255,92,92,.35)}
-  .btn.secondary{flex:0 0 auto; background:#21212a; border:1px solid var(--line)}
   .btn:disabled{opacity:.6; cursor:not-allowed}
   .hint{color:var(--muted); font-size:12px}
   .reply{background:#1b1b23; border:1px solid var(--line); margin:10px 0; padding:12px; border-radius:10px; cursor:pointer}
@@ -45,17 +44,6 @@
   .bar{flex:1; height:10px; background:#22232b; border:1px solid var(--line); border-radius:999px; overflow:hidden}
   .fill{height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent2))}
   .count{font-size:12px; color:#d8d8e4; min-width:160px; text-align:right}
-  /* OCR uploader */
-  .uploader{margin-top:12px; padding:14px; border:1px dashed var(--line); border-radius:12px; background:#1b1b23}
-  .uploader.drag{border-color:#ff9a7a; background:#20202a}
-  .uploader .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-  .uploader input[type=file]{display:none}
-  .uploader .pick, .uploader .camera{
-    background:#21212a; border:1px solid var(--line); color:#fff; padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:800
-  }
-  .ocr-status{margin-top:8px; font-size:12px; color:#d8d8e4}
-  .ocr-progress{height:8px; background:#22232b; border:1px solid var(--line); border-radius:999px; overflow:hidden; margin-top:6px}
-  .ocr-fill{height:100%; width:0%; background:linear-gradient(90deg,#ff9a7a,#ff5c5c)}
   footer{margin:26px 0 20px; text-align:center; color:#a8a8b6; font-size:14px}
   footer a{color:#ff7a7a; text-decoration:none; margin:0 6px}
   footer a:hover{text-decoration:underline}
@@ -87,27 +75,12 @@
       <h1>Paste a message. Pick a voice. Drop a mic.</h1>
       <div class="callout">
         <div class="icon">💡</div>
-        <div><b>Paste any message, post, or comment — OR upload a screenshot — to get instant, human‑sounding replies in any voice.</b></div>
+        <div><b>Paste any message, post, or comment to get instant, human‑sounding replies in any voice.</b></div>
       </div>
       <div class="hint">You’ll get 3 sharp, quotable replies. Tap to copy. Your history is saved on this device.</div>
 
       <label for="text">Paste the message you want to reply to</label>
       <textarea id="text" placeholder="Paste the message, post, or comment here… (1–3 sentences works best)"></textarea>
-
-      <!-- OCR Uploader -->
-      <div class="uploader" id="uploader">
-        <div class="row">
-          <!-- Choose from photo library -->
-          <label for="filePhotos" class="pick">Choose from Photos</label>
-          <input id="filePhotos" type="file" accept="image/*" />
-          <!-- Open camera directly (supported on most mobile browsers) -->
-          <label for="fileCamera" class="camera">Take a Photo</label>
-          <input id="fileCamera" type="file" accept="image/*" capture="environment" />
-          <span class="hint">Or drag & drop a screenshot here — processed on your device.</span>
-        </div>
-        <div class="ocr-status" id="ocrStatus">No image selected.</div>
-        <div class="ocr-progress"><div id="ocrFill" class="ocr-fill"></div></div>
-      </div>
 
       <label>Choose a voice</label>
       <div class="tones" id="tones">
@@ -152,9 +125,6 @@
       <a href="/terms.html">Terms of Use</a>
     </footer>
   </div>
-
-<!-- Tesseract.js (client-side OCR) -->
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
 
 <script>
   // ---- Tone pills ----
@@ -239,89 +209,6 @@
       btn.disabled = false; btn.textContent = 'Generate Replies';
     }
   });
-
-  // ---- OCR (client-side, drag & drop + photo library + camera) ----
-  const uploader = document.getElementById('uploader');
-  const filePhotos = document.getElementById('filePhotos');   // opens photo library
-  const fileCamera = document.getElementById('fileCamera');   // opens camera (mobile)
-  const ocrStatus = document.getElementById('ocrStatus');
-  const ocrFill = document.getElementById('ocrFill');
-
-  filePhotos.addEventListener('change', ()=>{ if(filePhotos.files?.[0]) handleFile(filePhotos.files[0]); });
-  fileCamera.addEventListener('change', ()=>{ if(fileCamera.files?.[0]) handleFile(fileCamera.files[0]); });
-
-  ;['dragenter','dragover'].forEach(evt=>{
-    uploader.addEventListener(evt, e=>{ e.preventDefault(); e.stopPropagation(); uploader.classList.add('drag'); ocrStatus.textContent = 'Drop image to extract text…'; });
-  });
-  ;['dragleave','drop'].forEach(evt=>{
-    uploader.addEventListener(evt, e=>{ e.preventDefault(); e.stopPropagation(); uploader.classList.remove('drag'); });
-  });
-  uploader.addEventListener('drop', e=>{
-    const file = e.dataTransfer.files && e.dataTransfer.files[0];
-    if(file) handleFile(file);
-  });
-
-  // Resize very large images before OCR (faster + fewer mobile memory issues)
-  async function preprocessImage(file, maxW = 1800, maxH = 1800){
-    const img = document.createElement('img');
-    const fr = new FileReader();
-    const loaded = new Promise((resolve, reject)=>{
-      img.onload = ()=>resolve();
-      img.onerror = reject;
-    });
-    const read = new Promise((resolve)=>{ fr.onload = ()=>{ img.src = fr.result; resolve(); }; fr.readAsDataURL(file); });
-    await read; await loaded;
-
-    const { width:w, height:h } = img;
-    let nw = w, nh = h;
-    const scale = Math.min(1, maxW/w, maxH/h);
-    if (scale < 1) { nw = Math.round(w*scale); nh = Math.round(h*scale); }
-
-    const canvas = document.createElement('canvas');
-    canvas.width = nw; canvas.height = nh;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, nw, nh);
-
-    const blob = await new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/jpeg', 0.9));
-    return new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type:'image/jpeg' });
-  }
-
-  async function handleFile(file){
-    if(!file || !file.type.startsWith('image/')) return alert('Please choose an image file.');
-    ocrStatus.textContent = `Reading text from ${file.name}…`;
-    ocrFill.style.width = '0%';
-
-    try {
-      // Downscale huge images (screenshots are fine; photos can be massive)
-      const prepped = (file.size > 2_000_000) ? await preprocessImage(file) : file;
-
-      // Proper Tesseract init sequence (most compatible across mobile/desktop)
-      const worker = await Tesseract.createWorker({ logger: m=>{
-        if(m.status === 'recognizing text' && m.progress != null){
-          ocrFill.style.width = Math.round(m.progress*100) + '%';
-        }
-      }});
-      await worker.load();
-      await worker.loadLanguage('eng');
-      await worker.initialize('eng');
-
-      const { data: { text } } = await worker.recognize(prepped);
-      await worker.terminate();
-
-      const trimmed = (text || '').replace(/\s+\n/g,'\n').trim();
-      if(trimmed){
-        const ta = document.getElementById('text');
-        ta.value = trimmed;
-        ocrStatus.textContent = 'Text extracted. You can edit it above or generate replies now.';
-        ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else {
-        ocrStatus.textContent = 'No readable text detected. Try a clearer screenshot or a different photo.';
-      }
-    } catch (err) {
-      console.error(err);
-      ocrStatus.textContent = 'OCR failed. Please try another image.';
-    }
-  }
 </script>
 </body>
 </html>
