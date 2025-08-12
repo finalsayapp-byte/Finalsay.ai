@@ -25,13 +25,17 @@
   pre{white-space:pre-wrap;margin:6px 0 0}
   .actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
   .pill{padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:#21212a;color:#eee;font-size:12px}
+  .pill.diff{border-color:#ff8a8a;background:#291a1a;color:#ffdede}
   .empty{color:#a8a8b6;margin-top:16px}
+  .pager{display:flex;justify-content:center;gap:10px;margin:18px 0}
+  .pager button{background:#21212a;border:1px solid var(--line);color:#fff;padding:8px 12px;border-radius:10px;cursor:pointer}
+  .pager .info{color:#a8a8b6;align-self:center}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <a href="/"><svg class="logo" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff5c5c"/><stop offset="100%" stop-color="#ff9a7a"/></linearGradient></defs><text x="0" y="82" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="72" fill="url(#g)">FinalSay.ai</text></svg></a>
+    <a href="/"><svg class="logo" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff5c5c"/><stop offset="100%" stop-color="#ff7a7a"/></linearGradient></defs><text x="0" y="82" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="72" fill="url(#g)">FinalSay.ai</text></svg></a>
     <nav class="nav">
       <a href="/">Modes</a><a href="/simple.html">Simple</a><a href="/advanced.html">Advanced</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a>
     </nav>
@@ -51,21 +55,46 @@
 
   <div id="list" class="list"></div>
   <div id="empty" class="empty" style="display:none">No history yet.</div>
+
+  <div class="pager" id="pager" style="display:none">
+    <button id="prev">← Prev</button>
+    <div class="info" id="pageInfo"></div>
+    <button id="next">Next →</button>
+  </div>
 </div>
 
 <script>
   const LS_KEY='fs_history';
+  const PAGE_SIZE=10;
+  const DEFAULTS={politics:50,scispir:50,heat:40,formality:55,empathy:70,direct:65,humor:45,roast:35,optimism:60,length:75};
+
+  let page=1;
 
   function load(){
     try{ return JSON.parse(localStorage.getItem(LS_KEY)||'[]'); }
     catch{ return []; }
   }
   function save(list){ localStorage.setItem(LS_KEY, JSON.stringify(list)); }
+  function fmtTs(ts){ try{ return new Date(ts).toLocaleString(); }catch{ return String(ts);} }
 
-  function fmtTs(ts){
-    try{
-      const d=new Date(ts); return d.toLocaleString();
-    }catch{ return String(ts); }
+  function differsFromDefaults(sliders){
+    if(!sliders) return [];
+    const diffs=[];
+    for(const k in sliders){
+      const v=Number(sliders[k]);
+      const d=Number(DEFAULTS[k]);
+      if(!Number.isNaN(v) && v!==d) diffs.push(`${k}:${v}`);
+    }
+    return diffs;
+  }
+
+  function paginate(items){
+    const total=items.length;
+    const pages=Math.max(1, Math.ceil(total/PAGE_SIZE));
+    if(page>pages) page=pages;
+    const start=(page-1)*PAGE_SIZE;
+    const end=start+PAGE_SIZE;
+    return { slice: items.slice(start,end), total, pages };
   }
 
   function render(){
@@ -86,33 +115,41 @@
         it.scenario||'',
         it.intentText||'',
         ...(it.intents||[]),
-        JSON.stringify(it.sliders||{})
+        JSON.stringify(it.sliders||{}),
+        it.output||''
       ].join(' ').toLowerCase();
       return hay.includes(q);
     });
 
+    const { slice, total, pages } = paginate(shown);
+    const pager=document.getElementById('pager');
+    const pageInfo=document.getElementById('pageInfo');
+    pager.style.display = total>PAGE_SIZE ? 'flex' : 'none';
+    pageInfo.textContent = `Page ${page} of ${pages} • ${total} item${total!==1?'s':''}`;
+
     listEl.innerHTML='';
-    if(!shown.length){ empty.style.display='block'; return; }
+    if(!slice.length){ empty.style.display='block'; return; }
     empty.style.display='none';
 
-    shown.forEach((it,idx)=>{
+    slice.forEach((it)=>{
       const pills=[];
       if(it.mode) pills.push(`<span class="pill">${it.mode}</span>`);
       if(it.tone) pills.push(`<span class="pill">Tone: ${it.tone}</span>`);
       if(it.intents && it.intents.length) pills.push(...it.intents.map(v=>`<span class="pill">${v}</span>`));
 
-      const sliders = it.sliders ? Object.entries(it.sliders).map(([k,v])=>`${k}:${v}`).join(' · ') : '';
+      const diffs = differsFromDefaults(it.sliders);
+      const diffHtml = diffs.length ? `<div class="section"><div class="label">Slider diffs from default</div>${diffs.map(t=>`<span class="pill diff">${t}</span>`).join(' ')}</div>` : '';
 
       const body = it.mode==='simple'
         ? `<div class="section"><div class="label">Message</div><pre>${(it.input||'').replace(/</g,'&lt;')}</pre></div>
            <div class="section"><div class="label">Replies</div><pre>${(it.items||[]).join('\n\n').replace(/</g,'&lt;')}</pre></div>`
         : `<div class="section"><div class="label">Scenario</div><pre>${(it.scenario||'').replace(/</g,'&lt;')}</pre></div>
            <div class="section"><div class="label">Intent</div><pre>${(it.intentText||'').replace(/</g,'&lt;')}</pre></div>
-           ${sliders?`<div class="section"><div class="label">Sliders</div><pre>${sliders}</pre></div>`:''}
+           ${diffHtml}
            <div class="section"><div class="label">Reply</div><pre>${(it.output||'').replace(/</g,'&lt;')}</pre></div>`;
 
       const html = `
-        <div class="card" data-idx="${idx}">
+        <div class="card" data-ts="${it.ts}">
           <div class="row">
             <div class="meta">${fmtTs(it.ts)}</div>
             <div class="meta">${pills.join(' ')}</div>
@@ -122,6 +159,9 @@
             ${it.mode==='simple'
               ? '<button class="btn copy" data-type="replies">Copy Replies</button>'
               : '<button class="btn copy" data-type="reply">Copy Reply</button>'}
+            ${it.mode==='advanced'
+              ? '<button class="btn ghost reopen">Reopen in Advanced</button>'
+              : ''}
             <button class="btn ghost del">Delete</button>
           </div>
         </div>`;
@@ -131,27 +171,34 @@
     // wire actions
     listEl.querySelectorAll('.copy').forEach(btn=>{
       btn.onclick=async()=>{
-        const card=btn.closest('.card'); const idx=Number(card.dataset.idx);
-        const it=shown[idx];
-        const text = it.mode==='simple' ? (it.items||[]).join('\n\n') : (it.output||'');
+        const card=btn.closest('.card'); const ts=card.dataset.ts;
+        const it=load().find(x=>String(x.ts)===String(ts));
+        const text = btn.dataset.type==='replies' ? (it.items||[]).join('\n\n') : (it.output||'');
         await navigator.clipboard.writeText(text||'');
-        btn.textContent='Copied!'; setTimeout(()=>btn.textContent='Copy ' + (it.mode==='simple'?'Replies':'Reply'), 800);
+        btn.textContent='Copied!'; setTimeout(()=>btn.textContent=btn.dataset.type==='replies'?'Copy Replies':'Copy Reply', 800);
       };
     });
     listEl.querySelectorAll('.del').forEach(btn=>{
       btn.onclick=()=>{
-        const card=btn.closest('.card'); const ts=card.querySelector('.meta').textContent;
-        const all=load();
-        // delete by timestamp match
-        const metaTs = card.querySelector('.meta').textContent;
-        const cleaned = all.filter(x => fmtTs(x.ts)!==metaTs);
+        const ts=btn.closest('.card').dataset.ts;
+        const cleaned=load().filter(x=>String(x.ts)!==String(ts));
         save(cleaned); render();
+      };
+    });
+    listEl.querySelectorAll('.reopen').forEach(btn=>{
+      btn.onclick=()=>{
+        const ts=btn.closest('.card').dataset.ts;
+        const it=load().find(x=>String(x.ts)===String(ts));
+        if(it){
+          localStorage.setItem('fs_reopen', JSON.stringify(it));
+          window.location.href='/advanced.html?reopen=1';
+        }
       };
     });
   }
 
-  document.getElementById('q').oninput=render;
-  document.getElementById('mode').onchange=render;
+  document.getElementById('q').oninput=()=>{page=1;render();};
+  document.getElementById('mode').onchange=()=>{page=1;render();};
   document.getElementById('export').onclick=()=>{
     const data = JSON.stringify(load(), null, 2);
     const blob = new Blob([data], {type:'application/json'});
@@ -162,6 +209,8 @@
   document.getElementById('clear').onclick=()=>{
     if(confirm('Clear all saved history on this device?')){ localStorage.removeItem(LS_KEY); render(); }
   };
+  document.getElementById('prev').onclick=()=>{ if(page>1){ page--; render(); } };
+  document.getElementById('next').onclick=()=>{ page++; render(); };
 
   render();
 </script>
