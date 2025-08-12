@@ -53,6 +53,7 @@
     <a href="/"><svg class="logo" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff5c5c"/><stop offset="100%" stop-color="#ff7a7a"/></linearGradient></defs><text x="0" y="82" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="72" fill="url(#g)">FinalSay.ai</text></svg></a>
     <nav class="nav">
       <a href="/">Modes</a>
+      <a href="/personas.html">Personas</a>
       <a href="/build-voice.html">Build Your Voice</a>
       <a href="/favorites.html">Favorites</a>
       <a href="/history.html">History</a>
@@ -133,11 +134,12 @@
 </div>
 
 <script>
-  // ===== Global constants =====
+  // ===== Constants / keys =====
   const DAILY_LIMIT=10;
   const HISTORY_KEY='fs_history';
   const PROFILE_KEY='fs_custom_voices';
   const DEFAULT_ID_KEY='fs_default_voice_id';
+  const PREMIUM_FLAG='fs_is_premium';
 
   // ===== Intent chips =====
   const intentSet = new Set();
@@ -164,7 +166,7 @@
   const refreshMeter=()=>{const used=getCount();const pct=Math.min(100,Math.round((used/DAILY_LIMIT)*100));document.getElementById('fill').style.width=pct+'%';document.getElementById('counter').textContent=`${used} / ${DAILY_LIMIT} free today`;};
   refreshMeter();
 
-  // ===== Unified history save =====
+  // ===== History save =====
   function saveHistoryAdvanced(entry){
     const list = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
     list.unshift(entry);
@@ -173,16 +175,16 @@
 
   // ===== Personas loader (auto-load /personas.json if available) =====
   const FALLBACK_PERSONAS = [
-    {id:'buddha',name:'Buddha',sector:'Spiritual & Mystical',defaults:{politics:50,scispir:65,heat:10,formality:60,empathy:90,direct:55,humor:5,roast:0,optimism:75,length:70}},
-    {id:'roastmaster',name:'Roastmaster',sector:'Humor & Satire',defaults:{politics:50,scispir:45,heat:65,formality:40,empathy:35,direct:85,humor:90,roast:80,optimism:55,length:45}},
-    {id:'hostage',name:'Hostage Negotiator',sector:'Negotiation & Influence',defaults:{politics:50,scispir:45,heat:25,formality:65,empathy:80,direct:55,humor:10,roast:0,optimism:40,length:70}},
-    {id:'yoda',name:'Yoda (homage)',sector:'Pop Culture & Fictional',defaults:{politics:50,scispir:70,heat:10,formality:65,empathy:80,direct:55,humor:20,roast:10,optimism:70,length:55}},
-    {id:'greedy',name:'Greedy Mogul',sector:'Vices & Extremes',defaults:{politics:50,scispir:40,heat:45,formality:65,empathy:20,direct:85,humor:25,roast:20,optimism:55,length:50}},
-    {id:'nonbinary',name:'Non-Binary Visionary',sector:'LGBTQIA+ & Identity',defaults:{politics:50,scispir:45,heat:30,formality:55,empathy:85,direct:60,humor:35,roast:15,optimism:75,length:60}},
-    {id:'autistic_literalist',name:'Autistic Literalist',sector:'Neurodiversity',defaults:{politics:50,scispir:45,heat:20,formality:65,empathy:45,direct:85,humor:10,roast:0,optimism:45,length:60}},
-    {id:'tony',name:'Tony Soprano (homage)',sector:'Pop Culture & Fictional',defaults:{politics:50,scispir:45,heat:45,formality:55,empathy:45,direct:85,humor:25,roast:25,optimism:45,length:55}},
-    {id:'union',name:'Union Leader',sector:'Negotiation & Influence',defaults:{politics:40,scispir:40,heat:55,formality:55,empathy:65,direct:70,humor:35,roast:25,optimism:55,length:70}},
-    {id:'dark_horse',name:'Dark Horse',sector:'Psychological (Style)',defaults:{politics:50,scispir:45,heat:35,formality:55,empathy:45,direct:75,humor:15,roast:15,optimism:55,length:50}}
+    {id:'buddha',name:'Buddha',sector:'Spiritual & Mystical',defaults:{politics:50,scispir:65,heat:10,formality:60,empathy:95,direct:55,humor:5,roast:0,optimism:80,length:70},premium:false},
+    {id:'roastmaster',name:'Roastmaster',sector:'Humor & Satire',defaults:{politics:50,scispir:45,heat:65,formality:40,empathy:35,direct:85,humor:95,roast:85,optimism:55,length:45},premium:false},
+    {id:'hostage',name:'Hostage Negotiator',sector:'Negotiation & Influence',defaults:{politics:50,scispir:45,heat:25,formality:65,empathy:85,direct:55,humor:10,roast:0,optimism:45,length:75},premium:false},
+    {id:'yoda',name:'Yoda (homage)',sector:'Pop Culture & Fictional',defaults:{politics:50,scispir:70,heat:10,formality:65,empathy:85,direct:55,humor:20,roast:10,optimism:70,length:55},premium:false},
+    {id:'greedy',name:'Greedy Mogul',sector:'Vices & Extremes',defaults:{politics:50,scispir:40,heat:45,formality:65,empathy:20,direct:85,humor:25,roast:20,optimism:55,length:50},premium:false},
+    {id:'nonbinary',name:'Non-Binary Visionary',sector:'LGBTQIA+ & Identity',defaults:{politics:50,scispir:45,heat:30,formality:55,empathy:90,direct:60,humor:35,roast:15,optimism:75,length:60},premium:false},
+    {id:'autistic_literalist',name:'Autistic Literalist',sector:'Neurodiversity',defaults:{politics:50,scispir:45,heat:20,formality:65,empathy:50,direct:85,humor:10,roast:0,optimism:45,length:60},premium:false},
+    {id:'tony',name:'Tony Soprano (homage)',sector:'Pop Culture & Fictional',defaults:{politics:50,scispir:45,heat:45,formality:55,empathy:45,direct:85,humor:25,roast:25,optimism:45,length:55},premium:true},
+    {id:'union',name:'Union Leader',sector:'Negotiation & Influence',defaults:{politics:40,scispir:40,heat:55,formality:55,empathy:65,direct:70,humor:35,roast:25,optimism:55,length:70},premium:false},
+    {id:'dark_horse',name:'Dark Horse',sector:'Psychological (Style)',defaults:{politics:50,scispir:45,heat:35,formality:55,empathy:45,direct:75,humor:15,roast:15,optimism:55,length:50},premium:false}
   ];
 
   async function fetchPersonas(){
@@ -206,20 +208,10 @@
     }).forEach(p=>{
       const el=document.createElement('div');
       el.className='persona';
-      el.innerHTML=`<div><div class="name">${p.name}</div><div class="sector">${p.sector||''}</div></div><button class="use">Load</button>`;
+      el.innerHTML=`<div><div class="name">${p.name}</div><div class="sector">${p.sector||''}</div></div><button class="use">${p.premium?'Unlock':'Load'}</button>`;
       el.querySelector('.use').onclick=()=>applyPersona(p);
       plist.appendChild(el);
     });
-  }
-
-  function applyPersona(p){
-    const defs=p.defaults||{};
-    for(const k of slidersList){
-      if(defs[k]!=null){
-        const el=document.getElementById(k);
-        if(el){ el.value=defs[k]; const v=document.getElementById('v_'+(k==='scispir'?'scispir':k)); if(v) v.textContent=defs[k]; }
-      }
-    }
   }
 
   // Boot personas
@@ -230,6 +222,23 @@
   })();
   document.getElementById('psearch').oninput=()=>renderPersonas(_personas);
   document.getElementById('reloadPersonas').onclick=async()=>{ _personas=await fetchPersonas(); renderPersonas(_personas); };
+
+  // ===== Apply persona with premium guard =====
+  function applyPersona(p){
+    const upgraded = localStorage.getItem(PREMIUM_FLAG)==='1';
+    if(p.premium && !upgraded){
+      localStorage.setItem('fs_pending_persona', p.id);
+      localStorage.setItem('fs_apply_persona', JSON.stringify(p));
+      window.location.href='/premium.html';
+      return;
+    }
+    if(p.defaults){
+      for(const k in p.defaults){
+        const el=document.getElementById(k);
+        if(el){ el.value=p.defaults[k]; const v=document.getElementById('v_'+(k==='scispir'?'scispir':k)); if(v) v.textContent=p.defaults[k]; }
+      }
+    }
+  }
 
   // ===== Save as preset / Set default =====
   document.getElementById('savePreset').onclick=()=>{
@@ -247,12 +256,14 @@
   document.getElementById('setDefault').onclick=()=>{
     const arr=JSON.parse(localStorage.getItem(PROFILE_KEY)||'[]');
     if(!arr.length){ alert('No saved presets yet. Use “Save Current as Preset” first.'); return; }
-    const id=arr[0].id; localStorage.setItem(DEFAULT_ID_KEY,id); alert('Default voice set to your most recent preset.');
+    const id=arr[0].id; localStorage.setItem(DEFAULT_ID_KEY, id); alert('Default voice set to your most recent preset.');
   };
 
-  // ===== Reopen from History or load default voice =====
-  (function tryReopen(){
+  // ===== Reopen from History; load default; accept applyPersona from /personas.html or /favorites.html =====
+  (function bootLoaders(){
     const url=new URL(location.href);
+
+    // From History reopen
     if(url.searchParams.get('reopen')==='1'){
       const raw=localStorage.getItem('fs_reopen');
       if(raw){
@@ -270,13 +281,45 @@
         }catch{}
         localStorage.removeItem('fs_reopen');
       }
-    } else {
-      const defId = localStorage.getItem(DEFAULT_ID_KEY);
-      if(defId){
-        const profiles = JSON.parse(localStorage.getItem(PROFILE_KEY)||'[]');
-        const v = profiles.find(p=>p.id===defId);
-        if(v && v.sliders){ for(const k in v.sliders){ const el=document.getElementById(k); if(el){ el.value=v.sliders[k]; document.getElementById('v_'+(k==='scispir'?'scispir':k)).textContent=v.sliders[k]; } } }
+    }
+
+    // From Favorites load
+    if(url.searchParams.get('loadVoice')==='1'){
+      const raw=localStorage.getItem('fs_reopen_voice');
+      if(raw){
+        try{
+          const v=JSON.parse(raw);
+          if(v && v.sliders){ for(const k in v.sliders){ const el=document.getElementById(k); if(el){ el.value=v.sliders[k]; document.getElementById('v_'+(k==='scispir'?'scispir':k)).textContent=v.sliders[k]; } } }
+          if(Array.isArray(v.intents)){ v.intents.forEach(tag=>{ const btn=[...document.querySelectorAll('.chip')].find(b=>b.dataset.intent===tag); if(btn){ btn.classList.add('active'); intentSet.add(tag); }}); }
+        }catch{}
+        localStorage.removeItem('fs_reopen_voice');
       }
+    }
+
+    // From Personas page: applyPersona
+    if(url.searchParams.get('applyPersona')==='1'){
+      const raw=localStorage.getItem('fs_apply_persona');
+      if(raw){
+        try{
+          const p=JSON.parse(raw);
+          const upgraded = localStorage.getItem(PREMIUM_FLAG)==='1';
+          if(p.premium && !upgraded){
+            localStorage.setItem('fs_pending_persona', p.id);
+            window.location.href='/premium.html';
+            return;
+          }
+          if(p.defaults){ for(const k in p.defaults){ const el=document.getElementById(k); if(el){ el.value=p.defaults[k]; const v=document.getElementById('v_'+(k==='scispir'?'scispir':k)); if(v) v.textContent=p.defaults[k]; } } }
+        }catch{}
+        localStorage.removeItem('fs_apply_persona');
+      }
+    }
+
+    // Load default on boot (if nothing else applied)
+    const defId = localStorage.getItem(DEFAULT_ID_KEY);
+    if(defId){
+      const profiles = JSON.parse(localStorage.getItem(PROFILE_KEY)||'[]');
+      const v = profiles.find(p=>p.id===defId);
+      if(v && v.sliders){ for(const k in v.sliders){ const el=document.getElementById(k); if(el){ el.value=v.sliders[k]; document.getElementById('v_'+(k==='scispir'?'scispir':k)).textContent=v.sliders[k]; } } }
     }
   })();
 
