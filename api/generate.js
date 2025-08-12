@@ -1,7 +1,7 @@
 // /api/generate.js
-// Supports two modes:
-//  - mode: "simple"   -> uses 7 extreme personas, returns 3 short options
-//  - mode: "advanced" -> builds a long, nuanced reply using slider parameters
+// Modes:
+//  - "simple": 7 personas, returns 3 short options
+//  - "advanced": long reply using sliders + scenario + intents
 
 const WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS = 12;
@@ -30,20 +30,20 @@ const PERSONAS = {
   "Chaotic Genius": `You are CHAOTIC GENIUS: brilliant, strange, hyper-associative references that still land. Surprising but coherent. 1–2 sentences.`
 };
 
-// --- Advanced prompt composer ---
-function buildAdvancedSystem(sl) {
+// --- Advanced composer ---
+function buildAdvancedSystem(sl, intents = [], intentText = "") {
   const pct = (v)=>Math.max(0, Math.min(100, Number(v)||0));
 
-  const politics = pct(sl.politics); // 0 left, 50 neutral, 100 right
-  const scispir  = pct(sl.scispir);  // 0 science, 50 balanced, 100 spiritual
-  const heat     = pct(sl.heat);     // 0 zen, 100 hot
-  const formality= pct(sl.formality);// 0 casual, 100 formal
-  const empathy  = pct(sl.empathy);  // 0 low, 100 high
-  const direct   = pct(sl.direct);   // 0 indirect, 100 direct
-  const humor    = pct(sl.humor);    // 0 dry, 100 absurd
-  const roast    = pct(sl.roast);    // 0 off, 100 savage
-  const optimism = pct(sl.optimism); // 0 cynical, 100 idealist
-  const length   = pct(sl.length);   // 0 short, 100 long
+  const politics = pct(sl.politics);
+  const scispir  = pct(sl.scispir);
+  const heat     = pct(sl.heat);
+  const formality= pct(sl.formality);
+  const empathy  = pct(sl.empathy);
+  const direct   = pct(sl.direct);
+  const humor    = pct(sl.humor);
+  const roast    = pct(sl.roast);
+  const optimism = pct(sl.optimism);
+  const length   = pct(sl.length);
 
   const style = [];
 
@@ -86,30 +86,37 @@ function buildAdvancedSystem(sl) {
   else if (optimism > 60) style.push(`Maintain a hopeful, possibility-oriented tone without naivety.`);
 
   // Length
-  const targetSentences = length < 30 ? 2
-    : length < 60 ? 4
-    : length < 80 ? 6
-    : 8;
+  const targetParagraphs = length < 30 ? 1 : length < 60 ? 3 : length < 80 ? 5 : 6;
 
+  // Temperature heuristic
   const temp = length > 70 || (humor > 60 || roast > 60) ? 0.95
              : heat > 60 ? 0.9
              : 0.7;
 
+  const objectiveLine = [
+    ...intents.map(i => `- ${i}`),
+    intentText && `- ${intentText}`
+  ].filter(Boolean).join('\n');
+
   const system = `
-You are FINAL ADVANCED: Craft a single, long-form reply that sounds human and original.
-Write ${targetSentences} well-structured paragraph${targetSentences>1?'s':''} (line breaks between paragraphs). Avoid bullet lists unless necessary.
+You are FINAL ADVANCED: craft a single, long-form reply that sounds human, strategic, and original.
+Write ${targetParagraphs} paragraph${targetParagraphs>1?'s':''} (blank line between paragraphs). Avoid bullets unless necessary.
+
+Primary objective(s):
+${objectiveLine || '- If no explicit intent is given, prioritize clarity, respect, and achieving a constructive outcome.'}
 
 Style directives:
 - ${style.join('\n- ')}
 
 Rules:
-- No emojis, no hashtags, no @mentions.
+- Align the tone and strategy with the objective(s) above.
+- No emojis, hashtags, or @mentions.
 - No profanity, slurs, or hateful content. Be sharp without targeting protected classes.
-- Use concrete examples when helpful. Prefer clear sentences over jargon.
-- If the message is aggressive, de-escalate unless "Heat" is very high.
+- Use concrete examples when helpful; avoid jargon.
+- If aggression is present, de-escalate unless Heat is very high.
   `.trim();
 
-  return { system, temperature: temp, max_tokens: 600 + Math.floor(length * 2) }; // generous room for long output
+  return { system, temperature: temp, max_tokens: 800 + Math.floor(length * 2) };
 }
 
 export default async function handler(req, res) {
@@ -120,12 +127,14 @@ export default async function handler(req, res) {
             || req.socket?.remoteAddress || "unknown";
     if (!rateLimit(ip)) return res.status(429).json({ error: "Too many requests. Try again shortly." });
 
-    const { mode, text } = req.body || {};
-    if (!text || !mode) return res.status(400).json({ error: "Missing mode/text" });
+    const { mode } = req.body || {};
+    if (!mode) return res.status(400).json({ error: "Missing mode" });
 
     let payload;
+
     if (mode === "simple") {
-      const { tone } = req.body;
+      const { text, tone } = req.body || {};
+      if (!text || !tone) return res.status(400).json({ error: "Missing text/tone" });
       const persona = PERSONAS[tone] || PERSONAS["Witty & Sarcastic"];
       const system = `${persona}
 Rules:
@@ -143,12 +152,15 @@ Rules:
         max_tokens: 240
       };
     } else if (mode === "advanced") {
-      const sliders = req.body.sliders || {};
-      const { system, temperature, max_tokens } = buildAdvancedSystem(sliders);
+      const { scenario, intentText = "", intents = [], sliders = {} } = req.body || {};
+      if (!scenario) return res.status(400).json({ error: "Missing scenario" });
+
+      const { system, temperature, max_tokens } = buildAdvancedSystem(sliders, intents, intentText);
+
       payload = {
         messages: [
           { role: "system", content: system },
-          { role: "user", content: `Original message (respond as one cohesive reply):\n"""${text}"""` }
+          { role: "user", content: `Scenario/context (respond as one cohesive reply tailored to the objectives):\n"""${scenario}"""` }
         ],
         temperature,
         max_tokens
@@ -157,7 +169,6 @@ Rules:
       return res.status(400).json({ error: "Unknown mode" });
     }
 
-    // Call OpenAI
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -165,7 +176,7 @@ Rules:
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini", // adjust to your available model
+        model: "gpt-4o-mini",
         ...payload
       }),
     });
@@ -186,7 +197,7 @@ Rules:
         .slice(0, 3);
       return res.status(200).json({ replies: cleaned });
     }
-    // advanced -> return as single string (the front-end displays as one long reply)
+    // advanced
     return res.status(200).json({ replies: stripOuterQuotes(raw) });
 
   } catch (err) {
