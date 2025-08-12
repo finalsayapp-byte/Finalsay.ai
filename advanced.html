@@ -38,7 +38,7 @@
 <body>
 <div class="wrap">
   <header>
-    <a href="/"><svg class="logo" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff5c5c"/><stop offset="100%" stop-color="#ff9a7a"/></linearGradient></defs><text x="0" y="82" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="72" fill="url(#g)">FinalSay.ai</text></svg></a>
+    <a href="/"><svg class="logo" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff5c5c"/><stop offset="100%" stop-color="#ff7a7a"/></linearGradient></defs><text x="0" y="82" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="72" fill="url(#g)">FinalSay.ai</text></svg></a>
     <nav class="nav">
       <a href="/">Modes</a><a href="/history.html">History</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a>
     </nav>
@@ -48,7 +48,6 @@
     <h1>Advanced Reply</h1>
     <div class="hint">Describe the situation and your goal. Pick intents and adjust the voice sliders. You’ll get a long, tailored reply.</div>
 
-    <!-- New: Scenario + Intent -->
     <label for="scenario">Describe the scenario (context, who said what, any constraints)</label>
     <textarea id="scenario" placeholder="Example: My manager publicly criticized my work in Slack for being 'slow and overthought.' I want to reply without burning bridges, but I need to push back and ask for clearer expectations. Include that our timeline changed twice."></textarea>
 
@@ -69,7 +68,6 @@
       <button class="chip" data-intent="Be compassionate">Be compassionate</button>
     </div>
 
-    <!-- Voice Equalizer -->
     <div class="grid" id="eq">
       <div class="slider"><label>Political Lean <span id="v_politics">50</span></label><input id="politics" type="range" min="0" max="100" value="50"></div>
       <div class="slider"><label>Science ↔ Spiritual <span id="v_scispir">50</span></label><input id="scispir" type="range" min="0" max="100" value="50"></div>
@@ -99,7 +97,7 @@
 </div>
 
 <script>
-  // Intent chips (multi-select)
+  // Intent chips
   const intentSet = new Set();
   document.getElementById('intents').addEventListener('click', (e)=>{
     if(!e.target.classList.contains('chip')) return;
@@ -108,9 +106,9 @@
     else { intentSet.add(val); e.target.classList.add('active'); }
   });
 
-  // Slider labels
-  const sliders=['politics','scispir','heat','formality','empathy','direct','humor','roast','optimism','length'];
-  sliders.forEach(id=>{
+  // Sliders + labels
+  const slidersList=['politics','scispir','heat','formality','empathy','direct','humor','roast','optimism','length'];
+  slidersList.forEach(id=>{
     const el=document.getElementById(id);
     const v=document.getElementById('v_'+(id==='scispir'?'scispir':id));
     const update=()=>v.textContent=el.value;
@@ -125,6 +123,63 @@
   const refresh=()=>{const used=getCount();const pct=Math.min(100,Math.round((used/DAILY_LIMIT)*100));document.getElementById('fill').style.width=pct+'%';document.getElementById('counter').textContent=`${used} / ${DAILY_LIMIT} free today`;};
   refresh();
 
+  // History save
+  function saveHistoryAdvanced(entry){
+    const list = JSON.parse(localStorage.getItem('fs_history')||'[]');
+    list.unshift(entry);
+    localStorage.setItem('fs_history', JSON.stringify(list.slice(0,50)));
+  }
+
+  // Prefill from History (Reopen)
+  (function tryReopen(){
+    const url=new URL(location.href);
+    if(url.searchParams.get('reopen')==='1'){
+      const raw=localStorage.getItem('fs_reopen');
+      if(raw){
+        try{
+          const it=JSON.parse(raw);
+          if(it.scenario) document.getElementById('scenario').value=it.scenario;
+          if(it.intentText) document.getElementById('intentText').value=it.intentText;
+          if(Array.isArray(it.intents)){
+            it.intents.forEach(v=>{
+              const btn=[...document.querySelectorAll('.chip')].find(b=>b.dataset.intent===v);
+              if(btn){ btn.classList.add('active'); intentSet.add(v); }
+            });
+          }
+          if(it.sliders){
+            for(const k in it.sliders){
+              const el=document.getElementById(k);
+              const val=it.sliders[k];
+              if(el){ el.value=val; const v=document.getElementById('v_'+(k==='scispir'?'scispir':k)); if(v) v.textContent=val; }
+            }
+          }
+        }catch{}
+        localStorage.removeItem('fs_reopen');
+      }
+    }
+  })();
+
+  // Generate
+  const btn=document.getElementById('generate'); const out=document.getElementById('output'); const statusEl=document.getElementById('status');
+  btn.addEventListener('click', async ()=>{
+    const scenario=document.getElementById('scenario').value.trim();
+    const intentText=document.getElementById('intentText').value.trim();
+    if(!scenario) return alert('Please describe the scenario first.');
+    const sliders={politics:+politics.value, scispir:+scispir.value, heat:+heat.value, formality:+formality.value, empathy:+empathy.value, direct:+direct.value, humor:+humor.value, roast:+roast.value, optimism:+optimism.value, length:+length.value};
+    const payload={ mode:'advanced', scenario, intentText, intents:Array.from(intentSet), sliders };
+    btn.disabled=true; btn.textContent='Weaving…'; statusEl.textContent='Composing a long, tailored reply…'; out.style.display='none'; out.textContent='';
+    try{
+      const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const data=await res.json(); if(!res.ok) throw new Error(data.error||'Error');
+      const reply=Array.isArray(data.replies)?data.replies.join('\n\n'):String(data.replies);
+      out.textContent=reply; out.style.display='block';
+      out.onclick=async()=>{await navigator.clipboard.writeText(out.textContent); out.classList.add('copied'); setTimeout(()=>out.classList.remove('copied'),700);};
+      saveHistoryAdvanced({ ts: Date.now(), mode:'advanced', scenario, intentText, intents:Array.from(intentSet), sliders, output: reply });
+      bump(); statusEl.textContent='';
+    }catch(e){out.style.display='block'; out.textContent='Error: '+e.message; statusEl.textContent='Try again in a moment.';}
+    finally{btn.disabled=false; btn.textContent='Generate Advanced Reply';}
+  });
+
   // Reset
   document.getElementById('reset').addEventListener('click',()=>{
     document.getElementById('scenario').value='';
@@ -133,41 +188,6 @@
     intentSet.clear();
     const defaults={politics:50,scispir:50,heat:40,formality:55,empathy:70,direct:65,humor:45,roast:35,optimism:60,length:75};
     for(const k in defaults){document.getElementById(k).value=defaults[k]; document.getElementById('v_'+(k==='scispir'?'scispir':k)).textContent=defaults[k];}
-  });
-
-  // Generate
-  const btn=document.getElementById('generate'), out=document.getElementById('output'), statusEl=document.getElementById('status');
-  btn.addEventListener('click', async ()=>{
-    const scenario=document.getElementById('scenario').value.trim();
-    const intentText=document.getElementById('intentText').value.trim();
-    if(!scenario) return alert('Please describe the scenario first.');
-    const payload={
-      mode:'advanced',
-      scenario, intentText,
-      intents: Array.from(intentSet),
-      sliders:{
-        politics:+document.getElementById('politics').value,
-        scispir:+document.getElementById('scispir').value,
-        heat:+document.getElementById('heat').value,
-        formality:+document.getElementById('formality').value,
-        empathy:+document.getElementById('empathy').value,
-        direct:+document.getElementById('direct').value,
-        humor:+document.getElementById('humor').value,
-        roast:+document.getElementById('roast').value,
-        optimism:+document.getElementById('optimism').value,
-        length:+document.getElementById('length').value
-      }
-    };
-    btn.disabled=true; btn.textContent='Weaving…'; statusEl.textContent='Composing a long, tailored reply…'; out.style.display='none'; out.textContent='';
-    try{
-      const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-      const data=await res.json(); if(!res.ok) throw new Error(data.error||'Error');
-      const reply=Array.isArray(data.replies)?data.replies.join('\n\n'):String(data.replies);
-      out.textContent=reply; out.style.display='block';
-      out.onclick=async()=>{await navigator.clipboard.writeText(out.textContent); out.classList.add('copied'); setTimeout(()=>out.classList.remove('copied'),700);};
-      bump(); statusEl.textContent='';
-    }catch(e){out.style.display='block'; out.textContent='Error: '+e.message; statusEl.textContent='Try again in a moment.';}
-    finally{btn.disabled=false; btn.textContent='Generate Advanced Reply';}
   });
 </script>
 </body>
