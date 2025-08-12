@@ -3,140 +3,159 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>FinalSay.ai</title>
+<title>FinalSay.ai — Get the Last Word</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    background: #111;
-    color: #eee;
+  :root{
+    --bg:#0f0f12; --panel:#17171c; --line:#2a2a36; --text:#eef; --muted:#a8a8b6;
+    --accent:#ff5c5c; --accent2:#ff7a7a;
   }
-  h1 {
-    text-align: center;
-    color: #fff;
-  }
-  .container {
-    max-width: 600px;
-    margin: auto;
-    background: #1c1c1c;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  }
-  textarea, select, button {
-    width: 100%;
-    margin: 8px 0;
-    padding: 10px;
-    font-size: 16px;
-    border-radius: 5px;
-    border: none;
-  }
-  textarea, select {
-    background: #222;
-    color: #eee;
-  }
-  button {
-    background: #ff5c5c;
-    color: white;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-  }
-  button:hover {
-    background: #ff3030;
-  }
-  .reply {
-    background: #222;
-    margin: 8px 0;
-    padding: 10px;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  .reply:hover {
-    background: #333;
-  }
-  footer {
-    margin-top: 40px;
-    font-size: 14px;
-    text-align: center;
-    color: #aaa;
-  }
-  footer a {
-    color: #ff5c5c;
-    text-decoration: none;
-    margin: 0 5px;
-  }
-  footer a:hover {
-    text-decoration: underline;
-  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:Inter, Arial, Helvetica, sans-serif; background:var(--bg); color:var(--text)}
+  .wrap{max-width:980px; margin:0 auto; padding:20px}
+  header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px}
+  .brand{display:flex; align-items:center; gap:10px}
+  .logo{display:block; width:220px; max-width:60vw}
+  .nav{display:flex; gap:10px; flex-wrap:wrap}
+  .nav a, .nav button{background:#21212a; color:#fff; border:1px solid var(--line); padding:10px 12px; border-radius:10px; text-decoration:none; font-weight:700; cursor:pointer}
+  .nav a:hover, .nav button:hover{border-color:#3a3a46}
+  h1{font-size:clamp(22px,4.5vw,30px); margin:10px 0 8px}
+  .container{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px}
+  label{display:block; margin:12px 0 6px}
+  textarea{width:100%; min-height:150px; background:#1e1e26; color:#eef; border:1px solid var(--line); border-radius:10px; padding:12px; font-size:16px; outline:none}
+  .tones{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0}
+  .tone{padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#21212a; color:#eee; cursor:pointer; font-weight:800; font-size:13px}
+  .tone.active{background:linear-gradient(90deg,var(--accent),var(--accent2)); border-color:transparent}
+  .actions{display:flex; gap:10px; margin:14px 0}
+  .btn{flex:1; background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; border:none; padding:12px; border-radius:10px; font-weight:900; cursor:pointer; box-shadow:0 8px 24px rgba(255,92,92,.35)}
+  .btn:disabled{opacity:.6; cursor:not-allowed}
+  .hint{color:var(--muted); font-size:12px}
+  .reply{background:#1b1b23; border:1px solid var(--line); margin:10px 0; padding:12px; border-radius:10px; cursor:pointer}
+  .reply:hover{background:#23232c}
+  .reply.copied{outline:2px solid var(--accent)}
+  footer{margin:26px 0 20px; text-align:center; color:var(--muted); font-size:14px}
+  footer a{color:#ff7a7a; text-decoration:none; margin:0 6px}
+  footer a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
-  <h1>FinalSay.ai</h1>
-  <div class="container">
-    <label for="text">Paste a comment or post:</label>
-    <textarea id="text" rows="4" placeholder="Enter text..."></textarea>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <!-- Slick, lightweight SVG wordmark -->
+        <svg class="logo" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg" aria-label="FinalSay.ai">
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#ff5c5c"/>
+              <stop offset="100%" stop-color="#ff9a7a"/>
+            </linearGradient>
+          </defs>
+          <text x="0" y="82" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="72" fill="url(#g)">
+            FinalSay.ai
+          </text>
+        </svg>
+      </div>
+      <nav class="nav">
+        <a href="/history.html" title="View your saved replies">History</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
+      </nav>
+    </header>
 
-    <label for="tone">Select a tone:</label>
-    <select id="tone">
-      <option value="witty">Witty</option>
-      <option value="savage">Savage</option>
-      <option value="supportive">Supportive</option>
-      <option value="professional">Professional</option>
-    </select>
+    <div class="container">
+      <h1>Paste a post. Pick a tone. Drop a mic.</h1>
+      <div class="hint">You’ll get 3 sharp, quotable replies. Tap to copy. History is saved on this device.</div>
 
-    <button id="generate">Generate Replies</button>
+      <label for="text">Post / comment you want to reply to</label>
+      <textarea id="text" placeholder="Paste the post here… (1–3 sentences works best)"></textarea>
 
-    <div id="output"></div>
+      <label>Choose a tone</label>
+      <div class="tones" id="tones">
+        <button class="tone active" data-tone="Witty">Witty</button>
+        <button class="tone" data-tone="Savage">Savage</button>
+        <button class="tone" data-tone="Supportive">Supportive</button>
+        <button class="tone" data-tone="Professional">Professional</button>
+      </div>
+
+      <div class="actions">
+        <button id="generate" class="btn">Generate Replies</button>
+      </div>
+      <div id="status" class="hint"></div>
+
+      <div id="output"></div>
+    </div>
+
+    <footer>
+      <a href="/privacy.html">Privacy Policy</a> |
+      <a href="/terms.html">Terms of Use</a>
+    </footer>
   </div>
 
-  <footer>
-    <a href="/privacy.html">Privacy Policy</a> | 
-    <a href="/terms.html">Terms of Use</a>
-  </footer>
-
 <script>
-document.getElementById("generate").addEventListener("click", async () => {
-  const text = document.getElementById("text").value.trim();
-  const tone = document.getElementById("tone").value;
-  const output = document.getElementById("output");
-  output.innerHTML = "<p>Generating...</p>";
+  // --- Tone pills ---
+  let tone = "Witty";
+  document.getElementById('tones').addEventListener('click', (e)=>{
+    if(!e.target.classList.contains('tone')) return;
+    document.querySelectorAll('.tone').forEach(b=>b.classList.remove('active'));
+    e.target.classList.add('active');
+    tone = e.target.dataset.tone;
+  });
 
-  try {
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, tone })
-    });
+  // --- Helpers ---
+  const stripOuterQuotes = s => s.replace(/^["“”'`]+|["“”'`]+$/g,'');
+  const cleanLine = s => stripOuterQuotes(s.replace(/^\s*\d+\.\s*/, '').trim());
+  const saveHistory = (input, items) => {
+    const entry = { ts: Date.now(), tone, input, items };
+    const list = JSON.parse(localStorage.getItem('fs_history')||'[]');
+    list.unshift(entry);
+    localStorage.setItem('fs_history', JSON.stringify(list.slice(0,20)));
+  };
 
-    const data = await res.json();
-    if (!res.ok) {
-      output.innerHTML = `<p style="color:red;">Error: ${data.error || 'Unknown error'}</p>`;
-      return;
+  // --- Generate ---
+  const btn = document.getElementById('generate');
+  const out = document.getElementById('output');
+  const statusEl = document.getElementById('status');
+
+  btn.addEventListener('click', async ()=>{
+    const text = document.getElementById('text').value.trim();
+    if(!text) return alert('Paste a post first.');
+
+    btn.disabled = true; btn.textContent = 'Thinking…';
+    statusEl.textContent = 'Drafting comebacks…';
+    out.innerHTML = '';
+
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({ text, tone })
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || 'Error');
+
+      let items = Array.isArray(data.replies) ? data.replies : String(data.replies).split(/\n/);
+      items = items.map(cleanLine).filter(Boolean);
+
+      if(!items.length){
+        out.innerHTML = `<div class="reply">No replies generated. Try rephrasing or a different tone.</div>`;
+      } else {
+        out.innerHTML = items.map(r => `<div class="reply">${r.replace(/</g,'&lt;')}</div>`).join('');
+        Array.from(out.querySelectorAll('.reply')).forEach(div=>{
+          div.addEventListener('click', async ()=>{
+            await navigator.clipboard.writeText(div.textContent);
+            div.classList.add('copied'); setTimeout(()=>div.classList.remove('copied'), 700);
+          });
+        });
+        // Save to local history
+        saveHistory(text, items);
+      }
+      statusEl.textContent = '';
+    } catch (e) {
+      out.innerHTML = `<div class="reply">Error: ${e.message}</div>`;
+      statusEl.textContent = 'Try again in a moment.';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Generate Replies';
     }
-
-    let items = Array.isArray(data.replies) ? data.replies : data.replies.split(/\n/);
-    items = items
-      .map(s => s.replace(/^\s*\d+\.\s*/,'').trim())
-      .map(s => s.replace(/^["“”'`]+|["“”'`]+$/g,''))
-      .filter(Boolean);
-
-    if (!items.length) {
-      output.innerHTML = "<p>No replies generated.</p>";
-      return;
-    }
-
-    output.innerHTML = items.map(r => `<div class="reply" onclick="copyReply('${r.replace(/'/g,"\\'")}')">${r}</div>`).join("");
-  } catch (err) {
-    output.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
-  }
-});
-
-function copyReply(text) {
-  navigator.clipboard.writeText(text)
-    .then(() => alert("Reply copied to clipboard!"))
-    .catch(err => console.error("Copy failed:", err));
-}
+  });
 </script>
 </body>
 </html>
