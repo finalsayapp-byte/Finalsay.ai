@@ -1,220 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FinalSay.ai — Get the Last Word</title>
-<meta name="description" content="Paste a post. Pick a tone. Drop a mic. FinalSay.ai gives you instant, quotable replies.">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FinalSay.ai</title>
 <style>
-  :root{
-    --bg:#0b0b10; --panel:#101018; --muted:#a0a0ad; --line:#242436;
-    --brand:#ff3b6a; --brand-2:#ff5b84; --text:#f8f8ff;
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background: #f9f9f9;
+    color: #333;
   }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{margin:0;background:radial-gradient(1000px 700px at 80% 10%, #1b1b26 0%, var(--bg) 60%);
-       color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;}
-  .wrap{max-width:980px;margin:0 auto;padding:24px}
-  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-  .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,59,106,.14);
-         border:1px solid rgba(255,59,106,.35);color:var(--brand);font-size:12px;font-weight:800}
-  h1{font-size:clamp(24px,4.5vw,36px);margin:8px 0 12px}
-  .sub{color:var(--muted);margin-bottom:14px}
-  .grid{display:grid;grid-template-columns:1fr;gap:16px}
-  @media (min-width:900px){.grid{grid-template-columns:1.2fr .8fr}}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
-  textarea{width:100%;min-height:140px;background:#12121b;color:#fff;border:1px solid var(--line);
-           border-radius:12px;padding:12px;font-size:15px;outline:none;resize:vertical}
-  .tones{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-  .tone{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#131321;color:#eaeaf4;
-        cursor:pointer;font-weight:700;font-size:13px}
-  .tone.active{background:linear-gradient(90deg,var(--brand),var(--brand-2)); border-color:transparent; color:#fff}
-  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-  button.primary{background:var(--brand);border:none;color:#fff;font-weight:800;padding:12px 16px;border-radius:12px;
-                 cursor:pointer;box-shadow:0 10px 28px rgba(255,59,106,.3)}
-  .hint{color:var(--muted);font-size:12px;margin-top:8px}
-  .replies{margin-top:8px}
-  .reply{padding:12px;border:1px solid var(--line);background:#141422;border-radius:12px;margin:8px 0;cursor:pointer}
-  .reply.copied{outline:2px solid var(--brand)}
-  .title{font-weight:800;margin-bottom:6px}
-  .history-item{padding:12px;border:1px dashed var(--line);border-radius:12px;margin:10px 0}
-  footer{margin-top:24px;color:var(--muted);font-size:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-  a{color:#e2e2ff}
-  strong{font-weight:800}
+  h1 {
+    text-align: center;
+    color: #111;
+  }
+  .container {
+    max-width: 600px;
+    margin: auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  textarea, select, button {
+    width: 100%;
+    margin: 8px 0;
+    padding: 10px;
+    font-size: 16px;
+  }
+  button {
+    background: #111;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #444;
+  }
+  .reply {
+    background: #f1f1f1;
+    margin: 8px 0;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .reply:hover {
+    background: #e1e1e1;
+  }
+  footer {
+    margin-top: 40px;
+    font-size: 14px;
+    text-align: center;
+    color: #666;
+  }
+  footer a {
+    color: #666;
+    text-decoration: none;
+    margin: 0 5px;
+  }
+  footer a:hover {
+    text-decoration: underline;
+  }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <span class="badge">FinalSay.ai</span>
-      <div style="font-size:12px;color:var(--muted)">MVP • v0.2</div>
-    </header>
+  <h1>FinalSay.ai</h1>
+  <div class="container">
+    <label for="text">Paste a comment or post:</label>
+    <textarea id="text" rows="4" placeholder="Enter text..."></textarea>
 
-    <h1>Paste a post. Pick a tone. Drop a mic.</h1>
-    <div class="sub">Get 3 sharp, quotable replies you can paste anywhere. Tap a reply to copy.</div>
+    <label for="tone">Select a tone:</label>
+    <select id="tone">
+      <option value="witty">Witty</option>
+      <option value="savage">Savage</option>
+      <option value="supportive">Supportive</option>
+      <option value="professional">Professional</option>
+    </select>
 
-    <div class="grid">
-      <!-- LEFT: composer -->
-      <section class="card">
-        <div class="title">Post / comment you want to reply to</div>
-        <textarea id="text" placeholder="Paste the post here… (1–3 sentences works best)"></textarea>
+    <button id="generate">Generate Replies</button>
 
-        <div class="title" style="margin-top:10px">Choose a tone</div>
-        <div class="tones" id="tones">
-          <button class="tone active" data-tone="Witty">Witty</button>
-          <button class="tone" data-tone="Wise">Wise</button>
-          <button class="tone" data-tone="Polished shade">Shade</button>
-          <button class="tone" data-tone="Streetwise">Streetwise</button>
-          <button class="tone" data-tone="Savage">Savage</button>
-        </div>
-
-        <div class="row">
-          <button id="go" class="primary">Generate Replies</button>
-          <div id="status" class="hint"></div>
-        </div>
-
-        <div id="out" class="replies" style="display:none">
-          <div class="title">Your Final Says</div>
-          <div id="replies"></div>
-          <div class="hint">Tip: tap any reply to copy. Generate again for a fresh set.</div>
-        </div>
-      </section>
-
-      <!-- RIGHT: history -->
-      <aside class="card">
-        <div class="title">History (device only)</div>
-        <div class="hint">Your last 10 sets are saved locally.</div>
-        <div id="history"></div>
-      </aside>
-    </div>
-
-    <footer>
-      <span>© <span id="yr"></span> FinalSay.ai</span>
-      <span>•</span>
-      <a href="#" id="privacy">Privacy</a>
-      <span>•</span>
-      <a href="#" id="clear">Clear history</a>
-    </footer>
+    <div id="output"></div>
   </div>
 
+  <footer>
+    <a href="/privacy.html">Privacy Policy</a> | 
+    <a href="/terms.html">Terms of Use</a>
+  </footer>
+
 <script>
-  // --- Tone selection ---
-  const tonesEl = document.getElementById('tones');
-  let tone = "Witty";
-  tonesEl.addEventListener('click', (e)=>{
-    if(e.target.classList.contains('tone')){
-      document.querySelectorAll('.tone').forEach(t=>t.classList.remove('active'));
-      e.target.classList.add('active');
-      tone = e.target.dataset.tone;
-    }
-  });
+document.getElementById("generate").addEventListener("click", async () => {
+  const text = document.getElementById("text").value.trim();
+  const tone = document.getElementById("tone").value;
+  const output = document.getElementById("output");
+  output.innerHTML = "<p>Generating...</p>";
 
-  // --- Helpers: clean quotes & highlight keywords ---
-  function stripOuterQuotes(s){
-    return s.replace(/^["“”'`]+|["“”'`]+$/g,'');
-  }
-  const highlightWords = [
-    'facts','evidence','nuance','logic','truth','reality','data','receipts',
-    'accountability','context','source','sources','final say','finalsay'
-  ];
-  function highlight(text){
-    let out = text;
-    highlightWords.forEach(w=>{
-      const re = new RegExp(`\\b(${w.replace(/[-/\\^$*+?.()|[\]{}]/g,'\\$&')})\\b`,`gi`);
-      out = out.replace(re,'<strong>$1</strong>');
+  try {
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, tone })
     });
-    return out;
-  }
 
-  // --- History ---
-  const histEl = document.getElementById('history');
-  function addToHistory(input, items){
-    const entry = { ts: Date.now(), input, items };
-    const list = JSON.parse(localStorage.getItem('fs_history')||'[]');
-    list.unshift(entry);
-    localStorage.setItem('fs_history', JSON.stringify(list.slice(0,10)));
-    renderHistory();
-  }
-  function renderHistory(){
-    const list = JSON.parse(localStorage.getItem('fs_history')||'[]');
-    histEl.innerHTML = '';
-    list.forEach((it)=>{
-      const box = document.createElement('div');
-      box.className = 'history-item';
-      const date = new Date(it.ts).toLocaleString();
-      box.innerHTML = `<div class="hint">${date}</div>
-      <div style="font-size:13px;color:#d6d6e6;margin:6px 0">${it.input.replace(/</g,"&lt;")}</div>`;
-      it.items.forEach(txt=>{
-        const d = document.createElement('div'); d.className='reply';
-        d.innerHTML = highlight(txt.replace(/</g,"&lt;"));
-        d.onclick = async ()=>{
-          // Copy plain text (no tags)
-          const plain = d.textContent;
-          await navigator.clipboard.writeText(plain);
-          d.classList.add('copied'); setTimeout(()=>d.classList.remove('copied'),700);
-        };
-        box.appendChild(d);
-      });
-      histEl.appendChild(box);
-    });
-  }
-  renderHistory();
-  document.getElementById('yr').textContent = new Date().getFullYear();
-
-  // --- Generate replies ---
-  const go = document.getElementById('go');
-  const out = document.getElementById('out');
-  const repliesWrap = document.getElementById('replies');
-  const statusEl = document.getElementById('status');
-
-  go.onclick = async () => {
-    const text = document.getElementById('text').value.trim();
-    if (!text) return alert("Paste a post first.");
-    go.disabled = true; go.textContent = "Thinking…"; statusEl.textContent = "Drafting comebacks…";
-    repliesWrap.innerHTML = ""; out.style.display = "block";
-
-    try {
-      const r = await fetch("/api/generate", {
-        method:"POST", headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ text, tone })
-      });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error || "Error");
-
-      // Accept either array or newline string
-      let items = Array.isArray(data.replies) ? data.replies : data.replies.split(/\n/);
-      items = items
-        .map(s=>s.replace(/^\s*\d+\.\s*/,'').trim())   // remove "1. "
-        .map(stripOuterQuotes)                         // remove outer quotes
-        .filter(Boolean);
-
-      items.forEach(txt=>{
-        const div = document.createElement('div');
-        div.className = "reply";
-        div.innerHTML = highlight(txt.replace(/</g,"&lt;")); // show with bold highlights
-        div.onclick = async ()=>{
-          await navigator.clipboard.writeText(div.textContent); // copy plain text (no quotes or tags)
-          div.classList.add('copied'); setTimeout(()=>div.classList.remove('copied'),700);
-        };
-        repliesWrap.appendChild(div);
-      });
-
-      addToHistory(text, items);
-      statusEl.textContent = "";
-    } catch (e) {
-      repliesWrap.innerHTML = `<div class="reply">Error: ${e.message}</div>`;
-      statusEl.textContent = "Try again in a moment.";
-    } finally {
-      go.disabled = false; go.textContent = "Generate Replies";
+    const data = await res.json();
+    if (!res.ok) {
+      output.innerHTML = `<p style="color:red;">Error: ${data.error || 'Unknown error'}</p>`;
+      return;
     }
-  };
 
-  // Footer actions
-  document.getElementById('clear').onclick = (e)=>{ e.preventDefault(); localStorage.removeItem('fs_history'); renderHistory(); };
-  document.getElementById('privacy').onclick = (e)=>{ e.preventDefault(); alert("MVP note: We process your text via a serverless API to generate replies. Add a full Privacy Policy before launch."); };
+    let items = Array.isArray(data.replies) ? data.replies : data.replies.split(/\n/);
+    items = items
+      .map(s => s.replace(/^\s*\d+\.\s*/,'').trim())
+      .map(s => s.replace(/^["“”'`]+|["“”'`]+$/g,''))
+      .filter(Boolean);
+
+    if (!items.length) {
+      output.innerHTML = "<p>No replies generated.</p>";
+      return;
+    }
+
+    output.innerHTML = items.map(r => `<div class="reply" onclick="copyReply('${r.replace(/'/g,"\\'")}')">${r}</div>`).join("");
+  } catch (err) {
+    output.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+  }
+});
+
+function copyReply(text) {
+  navigator.clipboard.writeText(text)
+    .then(() => alert("Reply copied to clipboard!"))
+    .catch(err => console.error("Copy failed:", err));
+}
 </script>
-  <footer style="margin-top:50px; font-size:14px; text-align:center; color:#666;">
-  <a href="/privacy.html">Privacy Policy</a> | 
-  <a href="/terms.html">Terms of Use</a>
-</footer>
 </body>
 </html>
