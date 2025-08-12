@@ -43,7 +43,6 @@
   .persona{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#20202a;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
   .persona .name{font-weight:800}
   .persona .sector{font-size:11px;color:#a8a8b6}
-  .persona .use{padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#2a2a35;color:#fff;cursor:pointer}
   .pill{padding:3px 8px;border-radius:999px;background:#2a2a35;border:1px solid var(--line);font-size:11px}
 
   .rowline{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:8px 0 2px}
@@ -52,6 +51,8 @@
   .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .seg button{background:#1b1b23;color:#fff;border:none;padding:8px 10px;cursor:pointer}
   .seg button.active{background:#2a2a35}
+  .sources{font-size:13px;color:#cfd6ff}
+  .sources a{color:#ffb3b3}
 </style>
 </head>
 <body>
@@ -70,7 +71,7 @@
   </header>
 
   <div class="layout">
-    <!-- Sidebar: Personas -->
+    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidegroup">
         <h3>Persona Presets</h3>
@@ -83,15 +84,14 @@
         <button id="savePreset" class="btn secondary">Save Current as Preset</button>
         <button id="setDefault" class="btn secondary">Set as Default</button>
       </div>
-      <div class="hint" style="margin-top:6px">Tip: Add more presets by placing <code>/personas.json</code> at site root (120–150 “no‑limits” edition). This page will auto‑load it.</div>
+      <div class="hint" style="margin-top:6px">Tip: Add more presets by placing <code>/personas.json</code> at site root.</div>
     </aside>
 
     <!-- Main -->
     <main class="container">
       <h1>Advanced Reply</h1>
-      <div class="hint">Paste the message you want to respond to, then (optionally) add context and your goal. Toggle <b>Direct, copy‑ready reply</b> to get a message you can paste back immediately.</div>
+      <div class="hint">Choose a path: **Reply** (copy‑ready) or **Advice + Sources** (strategy notes + links).</div>
 
-      <!-- NEW: Controls -->
       <div class="rowline">
         <label class="switch"><input id="directOnly" type="checkbox" checked/> Direct, copy‑ready reply (no advice)</label>
         <div class="switch">Format:
@@ -101,9 +101,9 @@
             <button data-fmt="long">Long</button>
           </span>
         </div>
+        <label class="switch"><input id="wantSources" type="checkbox"/> Include sources (for advice mode)</label>
       </div>
 
-      <!-- Primary message box -->
       <label for="message">Message to reply to</label>
       <textarea id="message" class="small" placeholder="Paste the exact text you want to respond to." autofocus></textarea>
 
@@ -142,11 +142,13 @@
 
       <div class="row">
         <button id="generate" class="btn">Generate Advanced Reply</button>
+        <button id="advice" class="btn secondary">Get Advice + Sources</button>
         <button id="reset" class="btn secondary">Reset</button>
       </div>
 
       <div id="status" class="hint"></div>
       <div id="output" class="reply" style="display:none"></div>
+      <div id="sources" class="sources" style="display:none"></div>
 
       <div class="meter" aria-live="polite">
         <div class="bar"><div id="fill" class="fill"></div></div>
@@ -157,175 +159,92 @@
 </div>
 
 <script>
-  // ===== Config =====
-  const PREMIUM_ENABLED = false; // flip to true when you want paywall active
-  const DAILY_LIMIT=10;
-  const HISTORY_KEY='fs_history';
-  const PROFILE_KEY='fs_custom_voices';
-  const DEFAULT_ID_KEY='fs_default_voice_id';
-  const PREMIUM_FLAG='fs_is_premium';
+  const PREMIUM_ENABLED=false, DAILY_LIMIT=10, HISTORY_KEY='fs_history', PREMIUM_FLAG='fs_is_premium';
 
-  // ===== Intent chips =====
-  const intentSet = new Set();
-  document.getElementById('intents').addEventListener('click', (e)=>{
+  // Intent chips
+  const intentSet=new Set();
+  document.getElementById('intents').addEventListener('click',(e)=>{
     if(!e.target.classList.contains('chip')) return;
-    const val = e.target.dataset.intent;
-    if(intentSet.has(val)){ intentSet.delete(val); e.target.classList.remove('active'); }
-    else { intentSet.add(val); e.target.classList.add('active'); }
+    const v=e.target.dataset.intent;
+    if(intentSet.has(v)){intentSet.delete(v);e.target.classList.remove('active');}
+    else{intentSet.add(v);e.target.classList.add('active');}
   });
 
-  // ===== Format segment =====
+  // Format seg
   let replyFormat='short';
   document.getElementById('formatSeg').addEventListener('click',(e)=>{
     if(e.target.tagName!=='BUTTON') return;
     [...e.currentTarget.children].forEach(b=>b.classList.remove('active'));
-    e.target.classList.add('active');
-    replyFormat = e.target.dataset.fmt;
+    e.target.classList.add('active'); replyFormat=e.target.dataset.fmt;
   });
 
-  // ===== Sliders + labels =====
-  const slidersList=['politics','scispir','heat','formality','empathy','direct','humor','roast','optimism','length'];
-  slidersList.forEach(id=>{
-    const el=document.getElementById(id);
-    const v=document.getElementById('v_'+(id==='scispir'?'scispir':id));
-    const update=()=>v.textContent=el.value;
-    el.addEventListener('input',update); update();
+  // Sliders labels
+  ['politics','scispir','heat','formality','empathy','direct','humor','roast','optimism','length'].forEach(id=>{
+    const el=document.getElementById(id), v=document.getElementById('v_'+(id==='scispir'?'scispir':id));
+    const up=()=>v.textContent=el.value; el.addEventListener('input',up); up();
   });
 
-  // ===== Usage meter =====
-  const todayKey=()=>{const d=new Date();return `fs_uses_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-  const getCount=()=>Number(localStorage.getItem(todayKey())||0);
-  const bump=()=>{const k=todayKey();localStorage.setItem(k,String(getCount()+1));refreshMeter();}
-  const refreshMeter=()=>{const used=getCount();const pct=Math.min(100,Math.round((used/DAILY_LIMIT)*100));document.getElementById('fill').style.width=pct+'%';document.getElementById('counter').textContent=`${used} / ${DAILY_LIMIT} free today`;};
-  refreshMeter();
+  // Meter
+  const today=()=>{const d=new Date();return`fs_uses_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+  const used=()=>Number(localStorage.getItem(today())||0);
+  const bump=()=>{const k=today();localStorage.setItem(k,String(used()+1));meter();}
+  const meter=()=>{const u=used();document.getElementById('fill').style.width=Math.min(100,Math.round((u/DAILY_LIMIT)*100))+'%';document.getElementById('counter').textContent=`${u} / ${DAILY_LIMIT} free today`;}
+  meter();
 
-  // ===== History save =====
-  function saveHistoryAdvanced(entry){
-    const list = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
-    list.unshift(entry);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0,200)));
-  }
+  // Personas (same as before, trimmed for brevity)
+  const FALLBACK_PERSONAS=[{id:'buddha',name:'Buddha',sector:'Spiritual & Mystical',defaults:{politics:50,scispir:65,heat:10,formality:60,empathy:95,direct:55,humor:5,roast:0,optimism:80,length:70},premium:false},{id:'roastmaster',name:'Roastmaster',sector:'Humor & Satire',defaults:{politics:50,scispir:45,heat:65,formality:40,empathy:35,direct:85,humor:95,roast:85,optimism:55,length:45},premium:false},{id:'hostage',name:'Hostage Negotiator',sector:'Negotiation & Influence',defaults:{politics:50,scispir:45,heat:25,formality:65,empathy:85,direct:55,humor:10,roast:0,optimism:45,length:75},premium:false},{id:'yoda',name:'Yoda (homage)',sector:'Pop Culture & Fictional',defaults:{politics:50,scispir:70,heat:10,formality:65,empathy:85,direct:55,humor:20,roast:10,optimism:70,length:55},premium:false},{id:'greedy',name:'Greedy Mogul',sector:'Vices & Extremes',defaults:{politics:50,scispir:40,heat:45,formality:65,empathy:20,direct:85,humor:25,roast:20,optimism:55,length:50},premium:false}];
+  async function fetchPersonas(){try{const r=await fetch('/personas.json',{cache:'no-store'});if(!r.ok)throw 0;const d=await r.json();return Array.isArray(d.personas)?d.personas:FALLBACK_PERSONAS;}catch{return FALLBACK_PERSONAS}}
+  function renderPersonas(list){const plist=document.getElementById('plist'),pcounts=document.getElementById('pcounts');plist.innerHTML='';pcounts.textContent=`${list.length} personas loaded`;const q=(document.getElementById('psearch').value||'').toLowerCase().trim();list.filter(p=>!q||(p.name+' '+(p.sector||'')).toLowerCase().includes(q)).forEach(p=>{const el=document.createElement('div');const showUnlock=(PREMIUM_ENABLED&&p.premium&&localStorage.getItem(PREMIUM_FLAG)!=='1');el.className='persona';el.innerHTML=`<div><div class="name">${p.name} ${p.premium?'<span class="pill">Pro</span>':''}</div><div class="sector">${p.sector||''}</div></div><button class="use">${showUnlock?'Unlock':'Load'}</button>`;el.querySelector('.use').onclick=()=>applyPersona(p,PREMIUM_ENABLED);plist.appendChild(el);});}
+  let _personas=[];(async()=>{_personas=await fetchPersonas();renderPersonas(_personas)})();document.getElementById('psearch').oninput=()=>renderPersonas(_personas);document.getElementById('reloadPersonas').onclick=async()=>{_personas=await fetchPersonas();renderPersonas(_personas);};
+  function applyPersona(p,gatingOn){const upgraded=localStorage.getItem(PREMIUM_FLAG)==='1';if(gatingOn&&p.premium&&!upgraded){localStorage.setItem('fs_pending_persona',p.id);localStorage.setItem('fs_apply_persona',JSON.stringify(p));location.href='/premium.html';return;}if(p.defaults){for(const k in p.defaults){const el=document.getElementById(k);if(el){el.value=p.defaults[k];document.getElementById('v_'+(k==='scispir'?'scispir':k)).textContent=p.defaults[k];}}}}
 
-  // ===== Personas loader (auto-load /personas.json if available) =====
-  const FALLBACK_PERSONAS = [
-    {id:'buddha',name:'Buddha',sector:'Spiritual & Mystical',defaults:{politics:50,scispir:65,heat:10,formality:60,empathy:95,direct:55,humor:5,roast:0,optimism:80,length:70},premium:false},
-    {id:'roastmaster',name:'Roastmaster',sector:'Humor & Satire',defaults:{politics:50,scispir:45,heat:65,formality:40,empathy:35,direct:85,humor:95,roast:85,optimism:55,length:45},premium:false},
-    {id:'hostage',name:'Hostage Negotiator',sector:'Negotiation & Influence',defaults:{politics:50,scispir:45,heat:25,formality:65,empathy:85,direct:55,humor:10,roast:0,optimism:45,length:75},premium:false},
-    {id:'yoda',name:'Yoda (homage)',sector:'Pop Culture & Fictional',defaults:{politics:50,scispir:70,heat:10,formality:65,empathy:85,direct:55,humor:20,roast:10,optimism:70,length:55},premium:false},
-    {id:'greedy',name:'Greedy Mogul',sector:'Vices & Extremes',defaults:{politics:50,scispir:40,heat:45,formality:65,empathy:20,direct:85,humor:25,roast:20,optimism:55,length:50},premium:false}
-  ];
-
-  async function fetchPersonas(){
-    try{
-      const res = await fetch('/personas.json',{cache:'no-store'});
-      if(!res.ok) throw new Error('not found');
-      const data = await res.json();
-      return Array.isArray(data.personas)?data.personas:FALLBACK_PERSONAS;
-    }catch{ return FALLBACK_PERSONAS; }
-  }
-
-  function renderPersonas(list){
-    const plist=document.getElementById('plist');
-    const pcounts=document.getElementById('pcounts');
-    plist.innerHTML='';
-    pcounts.textContent = `${list.length} persona${list.length!==1?'s':''} loaded`;
-    const q = (document.getElementById('psearch').value||'').toLowerCase().trim();
-    list.filter(p=>{
-      if(!q) return true;
-      return (p.name+' '+(p.sector||'')).toLowerCase().includes(q);
-    }).forEach(p=>{
-      const el=document.createElement('div');
-      const gatingOn = PREMIUM_ENABLED;
-      const showUnlock = (gatingOn && p.premium && localStorage.getItem(PREMIUM_FLAG)!=='1');
-      el.className='persona';
-      el.innerHTML=`<div><div class="name">${p.name} ${p.premium?'<span class="pill">Pro</span>':''}</div><div class="sector">${p.sector||''}</div></div><button class="use">${showUnlock?'Unlock':'Load'}</button>`;
-      el.querySelector('.use').onclick=()=>applyPersona(p, gatingOn);
-      plist.appendChild(el);
-    });
-  }
-
-  // Boot personas
-  let _personas=[];
-  (async function initPersonas(){
-    _personas = await fetchPersonas();
-    renderPersonas(_personas);
-  })();
-  document.getElementById('psearch').oninput=()=>renderPersonas(_personas);
-  document.getElementById('reloadPersonas').onclick=async()=>{ _personas=await fetchPersonas(); renderPersonas(_personas); };
-
-  // ===== Apply persona with premium guard (respects toggle) =====
-  function applyPersona(p, gatingOn){
-    const upgraded = localStorage.getItem(PREMIUM_FLAG)==='1';
-    if(gatingOn && p.premium && !upgraded){
-      localStorage.setItem('fs_pending_persona', p.id);
-      localStorage.setItem('fs_apply_persona', JSON.stringify(p));
-      window.location.href='/premium.html';
-      return;
-    }
-    if(p.defaults){
-      for(const k in p.defaults){
-        const el=document.getElementById(k);
-        if(el){ el.value=p.defaults[k]; const v=document.getElementById('v_'+(k==='scispir'?'scispir':k)); if(v) v.textContent=p.defaults[k]; }
-      }
-    }
-  }
-
-  // ===== Reopen routes + default loader =====
-  (function bootLoaders(){
-    const url=new URL(location.href);
-    if(url.searchParams.get('applyPersona')==='1'){
-      const raw=localStorage.getItem('fs_apply_persona');
-      if(raw){
-        try{
-          const p=JSON.parse(raw);
-          const upgraded = localStorage.getItem(PREMIUM_FLAG)==='1';
-          if(PREMIUM_ENABLED && p.premium && !upgraded){
-            localStorage.setItem('fs_pending_persona', p.id);
-            window.location.href='/premium.html';
-            return;
-          }
-          if(p.defaults){ for(const k in p.defaults){ const el=document.getElementById(k); if(el){ el.value=p.defaults[k]; const v=document.getElementById('v_'+(k==='scispir'?'scispir':k)); if(v) v.textContent=p.defaults[k]; } } }
-        }catch{}
-        localStorage.removeItem('fs_apply_persona');
-      }
-    }
-  })();
-
-  // ===== Generate =====
-  const btn=document.getElementById('generate'),out=document.getElementById('output'),statusEl=document.getElementById('status');
-  btn.addEventListener('click', async ()=>{
+  // Generate paths
+  async function callApi({advice=false}){
     const message=document.getElementById('message').value.trim();
     const scenario=document.getElementById('scenario').value.trim();
     const intentText=document.getElementById('intentText').value.trim();
-    if(!message && !scenario){
-      return alert('Please paste the message to reply to, or describe the scenario (ideally both).');
-    }
+    if(!message && !scenario) return alert('Please paste the message to reply to, or describe the scenario (ideally both).');
     const sliders=Object.fromEntries(['politics','scispir','heat','formality','empathy','direct','humor','roast','optimism','length'].map(k=>[k,+document.getElementById(k).value]));
-    const directOnly = document.getElementById('directOnly').checked;
-    const payload={ mode:'advanced', message, scenario, intentText, intents:Array.from(intentSet), sliders, directOnly, replyFormat };
-    btn.disabled=true; btn.textContent='Weaving…'; statusEl.textContent='Composing a long, tailored reply…'; out.style.display='none'; out.textContent='';
+    const directOnly = !advice && document.getElementById('directOnly').checked;
+    const wantSources = advice && document.getElementById('wantSources').checked;
+    const payload={ mode:'advanced', message, scenario, intentText, intents:Array.from(intentSet), sliders, directOnly, replyFormat, adviceMode: advice, wantSources };
+    const btn = advice ? document.getElementById('advice') : document.getElementById('generate');
+    const out=document.getElementById('output'), src=document.getElementById('sources'), status=document.getElementById('status');
+    btn.disabled=true; btn.textContent= advice ? 'Gathering advice…' : 'Weaving…';
+    out.style.display='none'; src.style.display='none'; status.textContent= advice ? 'Generating strategy notes and sources…' : 'Composing a copy‑ready reply…';
     try{
       const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       const data=await res.json(); if(!res.ok) throw new Error(data.error||'Error');
-      const reply=Array.isArray(data.replies)?data.replies.join('\n\n'):String(data.replies);
+      const reply=Array.isArray(data.replies)?data.replies.join('\n\n'):String(data.replies||'');
       out.textContent=reply; out.style.display='block';
       out.onclick=async()=>{await navigator.clipboard.writeText(out.textContent); out.classList.add('copied'); setTimeout(()=>out.classList.remove('copied'),700);};
-      saveHistoryAdvanced({ ts: Date.now(), mode:'advanced', message, scenario, intentText, intents:Array.from(intentSet), sliders, directOnly, replyFormat, output: reply });
-      bump(); statusEl.textContent='';
-    }catch(e){out.style.display='block'; out.textContent='Error: '+e.message; statusEl.textContent='Try again in a moment.';}
-    finally{btn.disabled=false; btn.textContent='Generate Advanced Reply';}
-  });
+      if(advice && Array.isArray(data.sources)){
+        src.innerHTML = data.sources.map(s=>`• <a href="${s.url}" target="_blank" rel="noopener">${s.title||s.url}</a> <span class="hint">(${s.domain||''})</span>`).join('<br/>');
+        if(data.sources.length){ src.style.display='block'; }
+      }
+      const entry={ ts:Date.now(), mode: advice?'advanced_advice':'advanced', message, scenario, intentText, intents:Array.from(intentSet), sliders, directOnly, replyFormat, output: reply, sources: data.sources||[] };
+      const list = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'); list.unshift(entry); localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0,200)));
+      bump(); status.textContent='';
+    }catch(e){ out.style.display='block'; out.textContent='Error: '+e.message; status.textContent='Try again.'; }
+    finally{ btn.disabled=false; btn.textContent= advice ? 'Get Advice + Sources' : 'Generate Advanced Reply'; }
+  }
 
-  // ===== Reset =====
+  document.getElementById('generate').onclick=()=>callApi({advice:false});
+  document.getElementById('advice').onclick=()=>callApi({advice:true});
+
+  // Reset
   document.getElementById('reset').addEventListener('click',()=>{
     document.getElementById('message').value='';
     document.getElementById('scenario').value='';
     document.getElementById('intentText').value='';
-    document.querySelectorAll('.chip.active').forEach(c=>c.classList.remove('active'));
-    intentSet.clear();
-    const defaults={politics:50,scispir:50,heat:40,formality:55,empathy:70,direct:65,humor:45,roast:35,optimism:60,length:75};
-    for(const k in defaults){document.getElementById(k).value=defaults[k]; document.getElementById('v_'+(k==='scispir'?'scispir':k)).textContent=defaults[k];}
+    document.querySelectorAll('.chip.active').forEach(c=>c.classList.remove('active')); intentSet.clear();
+    const d={politics:50,scispir:50,heat:40,formality:55,empathy:70,direct:65,humor:45,roast:35,optimism:60,length:75};
+    for(const k in d){document.getElementById(k).value=d[k]; document.getElementById('v_'+(k==='scispir'?'scispir':k)).textContent=d[k];}
+    document.getElementById('output').style.display='none'; document.getElementById('sources').style.display='none';
   });
+
+  // Autofocus
+  document.getElementById('message').focus();
 </script>
 </body>
 </html>
