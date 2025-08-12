@@ -299,6 +299,6 @@
     const defaults={politics:50,scispir:50,heat:40,formality:55,empathy:70,direct:65,humor:45,roast:35,optimism:60,length:75};
     for(const k in defaults){document.getElementById(k).value=defaults[k]; document.getElementById('v_'+(k==='scispir'?'scispir':k)).textContent=defaults[k];}
   });
-</script>
+  document.getElementById('message').focus();</script>
 </body>
 </html>
