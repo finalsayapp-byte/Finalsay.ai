@@ -4,34 +4,67 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Terms of Use - FinalSay.ai</title>
+  <meta name="description" content="Terms of Use for FinalSay.ai">
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-    h1 { color: #333; }
+    :root { --bg:#111; --panel:#1c1c1c; --text:#eee; --muted:#aaa; --accent:#ff5c5c; }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:Arial, Helvetica, sans-serif; background:var(--bg); color:var(--text); line-height:1.6}
+    .wrap{max-width:900px; margin:40px auto; padding:0 20px}
+    h1,h2{color:#fff}
+    .card{background:var(--panel); border-radius:10px; padding:24px; box-shadow:0 2px 10px rgba(0,0,0,.5)}
+    p, li{color:var(--text)}
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    .btn-wrap{margin-top:40px; text-align:center}
+    .btn{display:inline-block; background:var(--accent); color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none}
+    .muted{color:var(--muted); font-size:14px}
   </style>
 </head>
 <body>
-  <h1>Terms of Use</h1>
-  <p>Welcome to FinalSay.ai. By accessing or using our service, you agree to be bound by these terms.</p>
+  <div class="wrap">
+    <div class="card">
+      <h1>Terms of Use</h1>
+      <p class="muted">Last updated: <span id="date"></span></p>
 
-  <h2>Purpose</h2>
-  <p>FinalSay.ai provides AI-generated responses for entertainment, creativity, and social engagement purposes. The content is not guaranteed to be accurate or factual.</p>
+      <p>Welcome to FinalSay.ai. By accessing or using our service, you agree to these Terms.</p>
 
-  <h2>User Responsibilities</h2>
-  <ul>
-    <li>You agree not to use FinalSay.ai for illegal, harmful, or abusive purposes.</li>
-    <li>You are responsible for the content you choose to share publicly.</li>
-  </ul>
+      <h2>Service Description</h2>
+      <p>FinalSay.ai provides AI‑generated responses for entertainment, creativity, and social engagement. Outputs may be inaccurate or incomplete; use your own judgment before sharing.</p>
 
-  <h2>Intellectual Property</h2>
-  <p>The FinalSay.ai platform, design, and generated content are protected by copyright laws. You may share AI-generated replies, but may not resell them as your own service.</p>
+      <h2>Acceptable Use</h2>
+      <ul>
+        <li>Do not use the service for illegal, harmful, or abusive activities.</li>
+        <li>No harassment, hate speech, or doxxing.</li>
+        <li>Respect platform rules when posting generated content to third‑party services.</li>
+      </ul>
 
-  <h2>Disclaimer</h2>
-  <p>FinalSay.ai provides outputs based on user inputs and AI processing. We make no guarantees of accuracy, legality, or suitability for any purpose.</p>
+      <h2>Intellectual Property</h2>
+      <p>The FinalSay.ai platform, brand, and site assets are protected by applicable IP laws. You may share outputs you generate for personal/social use. Commercial reselling of the service or systematic scraping requires our written permission.</p>
 
-  <h2>Changes</h2>
-  <p>We reserve the right to update these terms at any time. Continued use means acceptance of the latest version.</p>
+      <h2>Accounts & Access</h2>
+      <p>You’re responsible for securing your account (if accounts are enabled) and for all activity under it.</p>
 
-  <h2>Contact</h2>
-  <p>Questions? Email us at support@finalsay.ai.</p>
+      <h2>Disclaimers</h2>
+      <p>We provide the service “as is,” without warranties of any kind, to the maximum extent permitted by law. We are not liable for damages arising from your use of generated outputs.</p>
+
+      <h2>Changes to the Service</h2>
+      <p>Features may change, pause, or end without notice. We may update these Terms at any time; continued use means acceptance of the updated Terms.</p>
+
+      <h2>Governing Law</h2>
+      <p>These Terms are governed by the laws of the jurisdiction where the service is operated, without regard to conflict‑of‑law principles.</p>
+
+      <h2>Contact</h2>
+      <p>Questions about these Terms? <a href="mailto:support@finalsay.ai">support@finalsay.ai</a></p>
+
+      <div class="btn-wrap">
+        <a class="btn" href="/">⬅ Return to Main</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    // auto-fill date
+    const d = new Date();
+    document.getElementById('date').textContent = d.toLocaleDateString();
+  </script>
 </body>
 </html>
