@@ -7,7 +7,7 @@
 <style>
   :root{
     --bg:#0f0f12; --panel:#17171c; --line:#2a2a36; --text:#eef; --muted:#a8a8b6;
-    --accent:#ff5c5c; --accent2:#ff7a7a;
+    --accent:#ff5c5c; --accent2:#ff7a7a; --hint:#20202a;
   }
   *{box-sizing:border-box}
   body{margin:0; font-family:Inter, Arial, Helvetica, sans-serif; background:var(--bg); color:var(--text)}
@@ -19,6 +19,12 @@
   .nav a:hover{border-color:#3a3a46}
   h1{font-size:clamp(22px,4.5vw,30px); margin:10px 0 8px}
   .container{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px}
+  .callout{
+    display:flex; gap:10px; align-items:flex-start; margin:6px 0 14px;
+    background:var(--hint); border:1px solid var(--line); border-radius:12px; padding:12px;
+  }
+  .callout b{color:#fff}
+  .callout .icon{font-size:18px; line-height:1.1}
   label{display:block; margin:12px 0 6px}
   textarea{width:100%; min-height:150px; background:#1e1e26; color:#eef; border:1px solid var(--line); border-radius:10px; padding:12px; font-size:16px; outline:none}
   .tones{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0}
@@ -44,11 +50,13 @@
   .uploader.drag{border-color:#ff9a7a; background:#20202a}
   .uploader .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
   .uploader input[type=file]{display:none}
-  .uploader .pick{background:#21212a; border:1px solid var(--line); color:#fff; padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:800}
+  .uploader .pick, .uploader .camera{
+    background:#21212a; border:1px solid var(--line); color:#fff; padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:800
+  }
   .ocr-status{margin-top:8px; font-size:12px; color:#d8d8e4}
   .ocr-progress{height:8px; background:#22232b; border:1px solid var(--line); border-radius:999px; overflow:hidden; margin-top:6px}
   .ocr-fill{height:100%; width:0%; background:linear-gradient(90deg,#ff9a7a,#ff5c5c)}
-  footer{margin:26px 0 20px; text-align:center; color:var(--muted); font-size:14px}
+  footer{margin:26px 0 20px; text-align:center; color:#a8a8b6; font-size:14px}
   footer a{color:#ff7a7a; text-decoration:none; margin:0 6px}
   footer a:hover{text-decoration:underline}
 </style>
@@ -77,7 +85,11 @@
 
     <div class="container">
       <h1>Paste a message. Pick a voice. Drop a mic.</h1>
-      <div class="hint">Get 3 sharp, quotable replies for any message, post, or comment. Tap to copy. Your history is saved on this device.</div>
+      <div class="callout">
+        <div class="icon">💡</div>
+        <div><b>Paste any message, post, or comment — OR upload a screenshot — to get instant, human‑sounding replies in any voice.</b></div>
+      </div>
+      <div class="hint">You’ll get 3 sharp, quotable replies. Tap to copy. Your history is saved on this device.</div>
 
       <label for="text">Paste the message you want to reply to</label>
       <textarea id="text" placeholder="Paste the message, post, or comment here… (1–3 sentences works best)"></textarea>
@@ -85,9 +97,13 @@
       <!-- OCR Uploader -->
       <div class="uploader" id="uploader">
         <div class="row">
-          <label for="file" class="pick">Upload screenshot</label>
-          <input id="file" type="file" accept="image/*" />
-          <span class="hint">Or drag & drop a screenshot here — we’ll pull the text for you (processed on your device).</span>
+          <!-- Choose from photo library -->
+          <label for="filePhotos" class="pick">Choose from Photos</label>
+          <input id="filePhotos" type="file" accept="image/*" />
+          <!-- Open camera directly (supported on most mobile browsers) -->
+          <label for="fileCamera" class="camera">Take a Photo</label>
+          <input id="fileCamera" type="file" accept="image/*" capture="environment" />
+          <span class="hint">Or drag & drop a screenshot here — processed on your device.</span>
         </div>
         <div class="ocr-status" id="ocrStatus">No image selected.</div>
         <div class="ocr-progress"><div id="ocrFill" class="ocr-fill"></div></div>
@@ -142,7 +158,7 @@
 
 <script>
   // ---- Tone pills ----
-  let tone = "Savage";
+  let tone = "Savage"; // default voice on load
   document.getElementById('tones').addEventListener('click', (e)=>{
     if(!e.target.classList.contains('tone')) return;
     document.querySelectorAll('.tone').forEach(b=>b.classList.remove('active'));
@@ -224,18 +240,20 @@
     }
   });
 
-  // ---- OCR (client-side, with drag & drop) ----
-  const fileInput = document.getElementById('file');
+  // ---- OCR (client-side, with drag & drop + photo library + camera) ----
   const uploader = document.getElementById('uploader');
+  const filePhotos = document.getElementById('filePhotos');   // opens photo library
+  const fileCamera = document.getElementById('fileCamera');   // opens camera (mobile)
   const ocrStatus = document.getElementById('ocrStatus');
   const ocrFill = document.getElementById('ocrFill');
 
-  uploader.addEventListener('click', (e)=>{
-    if(e.target.classList.contains('pick')) fileInput.click();
-  });
+  // Open pickers when labels clicked handled by browser
 
-  fileInput.addEventListener('change', ()=>{
-    if(fileInput.files && fileInput.files[0]) handleFile(fileInput.files[0]);
+  filePhotos.addEventListener('change', ()=>{
+    if(filePhotos.files && filePhotos.files[0]) handleFile(filePhotos.files[0]);
+  });
+  fileCamera.addEventListener('change', ()=>{
+    if(fileCamera.files && fileCamera.files[0]) handleFile(fileCamera.files[0]);
   });
 
   ;['dragenter','dragover'].forEach(evt=>{
@@ -270,10 +288,9 @@
         const ta = document.getElementById('text');
         ta.value = trimmed;
         ocrStatus.textContent = 'Text extracted. You can edit it above or generate replies now.';
-        // Smooth scroll to the textarea on mobile
         ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } else {
-        ocrStatus.textContent = 'No readable text detected. Try a clearer screenshot.';
+        ocrStatus.textContent = 'No readable text detected. Try a clearer screenshot or a different photo.';
       }
     } catch (err) {
       console.error(err);
