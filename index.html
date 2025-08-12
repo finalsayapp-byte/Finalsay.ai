@@ -1,32 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FinalSay.ai - Coming Soon</title>
-  <style>
-    body {
-      background: #0d0d0d;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      font-family: Arial, sans-serif;
-      text-align: center;
-    }
-    h1 {
-      font-size: 3rem;
-    }
-    p {
-      font-size: 1.2rem;
-      color: #ccc;
-    }
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FinalSay.ai — Get the Last Word</title>
+<style>
+  body{margin:0;background:#0d0d0f;color:#fff;font-family:Inter,system-ui,Arial}
+  .wrap{max-width:860px;margin:0 auto;padding:28px}
+  h1{font-size:32px;margin:6px 0 16px}
+  .tag{display:inline-block;background:#ff335522;color:#ff3355;border:1px solid #ff335540;
+       padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px;margin-top:8px}
+  textarea{width:100%;min-height:150px;background:#14141b;color:#fff;border:1px solid #2b2b34;
+           border-radius:12px;padding:14px;font-size:15px;outline:none}
+  select,button{padding:12px 14px;border-radius:12px;border:1px solid #2b2b34;background:#14141b;
+           color:#fff;font-weight:600}
+  button{background:#ff3355;border:none;box-shadow:0 8px 24px #ff335533;cursor:pointer}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 18px}
+  .card{background:#101017;border:1px solid #23232c;border-radius:16px;padding:16px;margin-top:10px}
+  .reply{padding:10px 12px;background:#151520;border:1px solid #242434;border-radius:12px;margin:8px 0}
+  .small{color:#a9a9b2;font-size:12px;margin-top:6px}
+</style>
 </head>
 <body>
-  <h1>FinalSay.ai</h1>
-  <p>Your ultimate AI-powered reply machine is coming soon...</p>
+  <div class="wrap">
+    <span class="tag">FinalSay.ai</span>
+    <h1>Paste a post. Pick a tone. Drop a mic.</h1>
+
+    <div class="card">
+      <label for="text">Post / comment you want to reply to</label>
+      <textarea id="text" placeholder="Paste the post here..."></textarea>
+
+      <div class="row">
+        <select id="tone">
+          <option>Witty</option>
+          <option>Wise</option>
+          <option>Polished shade</option>
+          <option>Streetwise</option>
+          <option>Savage</option>
+        </select>
+        <button id="go">Generate Replies</button>
+      </div>
+      <div class="small">Tip: keep the paste short (1–3 sentences) for best punch.</div>
+    </div>
+
+    <div id="out" class="card" style="display:none">
+      <strong>Your Final Says</strong>
+      <div id="replies"></div>
+      <div class="small">Tap to copy.</div>
+    </div>
+  </div>
+
+<script>
+const go = document.getElementById('go');
+const out = document.getElementById('out');
+const replies = document.getElementById('replies');
+
+go.onclick = async () => {
+  const text = document.getElementById('text').value.trim();
+  const tone = document.getElementById('tone').value;
+  if (!text) return alert("Paste a post first.");
+
+  go.disabled = true; go.textContent = "Thinking…";
+  replies.innerHTML = ""; out.style.display = "block";
+
+  try {
+    const r = await fetch("/api/generate", {
+      method:"POST", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ text, tone })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || "Error");
+
+    data.replies.split(/\n/).filter(Boolean).forEach(line => {
+      const div = document.createElement('div');
+      div.className = "reply";
+      div.textContent = line.replace(/^\s*\d+\.\s*/, "");
+      div.onclick = async () => {
+        await navigator.clipboard.writeText(div.textContent);
+        div.style.outline = "2px solid #ff3355"; setTimeout(()=>div.style.outline="",600);
+      };
+      replies.appendChild(div);
+    });
+  } catch (e) {
+    replies.innerHTML = `<div class="reply">Error: ${e.message}</div>`;
+  } finally {
+    go.disabled = false; go.textContent = "Generate Replies";
+  }
+};
+</script>
 </body>
 </html>
