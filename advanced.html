@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FinalSay.ai — Advanced Reply</title>
+<style>
+  :root{--bg:#0f0f12;--panel:#17171c;--line:#2a2a36;--text:#eef;--muted:#a8a8b6;--accent:#ff5c5c;--accent2:#ff7a7a}
+  *{box-sizing:border-box} body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+  .wrap{max-width:1040px;margin:0 auto;padding:20px}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .logo{display:block;width:220px;max-width:60vw}
+  .nav{display:flex;gap:10px;flex-wrap:wrap}
+  .nav a{background:#21212a;color:#fff;border:1px solid var(--line);padding:10px 12px;border-radius:10px;text-decoration:none;font-weight:800}
+  .container{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  h1{font-size:clamp(22px,4.5vw,30px);margin:10px 0}
+  label{display:block;margin:12px 0 6px}
+  textarea{width:100%;min-height:180px;background:#1e1e26;color:#eef;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:16px;outline:none}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:10px}
+  .slider{background:#1b1b23;border:1px solid var(--line);border-radius:12px;padding:12px}
+  .slider label{margin:0 0 6px 0;font-size:13px;color:#ddd;display:flex;justify-content:space-between}
+  .slider input[type=range]{width:100%}
+  .row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .btn{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:none;padding:12px 14px;border-radius:10px;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(255,92,92,.35)}
+  .btn.secondary{background:#21212a;border:1px solid var(--line)}
+  .hint{color:var(--muted);font-size:12px}
+  .reply{background:#1b1b23;border:1px solid var(--line);margin:10px 0;padding:14px;border-radius:10px;cursor:pointer;line-height:1.5}
+  .reply:hover{background:#23232c}.reply.copied{outline:2px solid var(--accent)}
+  .meter{margin-top:14px;display:flex;align-items:center;gap:10px}
+  .bar{flex:1;height:10px;background:#22232b;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+  .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .count{font-size:12px;color:#d8d8e4;min-width:160px;text-align:right}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a href="/"><svg class="logo" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff5c5c"/><stop offset="100%" stop-color="#ff9a7a"/></linearGradient></defs><text x="0" y="82" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="72" fill="url(#g)">FinalSay.ai</text></svg></a>
+    <nav class="nav">
+      <a href="/">Modes</a><a href="/history.html">History</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <h1>Advanced Reply</h1>
+    <div class="hint">Craft long, nuanced responses. Use the sliders to “blend” the voice. Copy any result.</div>
+
+    <label for="text">Paste the message you want a long reply to</label>
+    <textarea id="text" placeholder="Paste the full message, email, post, or argument…"></textarea>
+
+    <!-- Voice Equalizer -->
+    <div class="grid" id="eq">
+      <div class="slider"><label>Political Lean <span id="v_politics">50</span></label><input id="politics" type="range" min="0" max="100" value="50"></div>
+      <div class="slider"><label>Science ↔ Spiritual <span id="v_scispir">50</span></label><input id="scispir" type="range" min="0" max="100" value="50"></div>
+      <div class="slider"><label>Heat (Zen ↔ Hot) <span id="v_heat">40</span></label><input id="heat" type="range" min="0" max="100" value="40"></div>
+      <div class="slider"><label>Formality <span id="v_formality">55</span></label><input id="formality" type="range" min="0" max="100" value="55"></div>
+      <div class="slider"><label>Empathy <span id="v_empathy">70</span></label><input id="empathy" type="range" min="0" max="100" value="70"></div>
+      <div class="slider"><label>Directness <span id="v_direct">65</span></label><input id="direct" type="range" min="0" max="100" value="65"></div>
+      <div class="slider"><label>Humor (Dry ↔ Absurd) <span id="v_humor">45</span></label><input id="humor" type="range" min="0" max="100" value="45"></div>
+      <div class="slider"><label>Sarcasm/Roast <span id="v_roast">35</span></label><input id="roast" type="range" min="0" max="100" value="35"></div>
+      <div class="slider"><label>Optimism (Cynical ↔ Idealist) <span id="v_optimism">60</span></label><input id="optimism" type="range" min="0" max="100" value="60"></div>
+      <div class="slider"><label>Length (Short ↔ Long) <span id="v_length">75</span></label><input id="length" type="range" min="0" max="100" value="75"></div>
+    </div>
+
+    <div class="row">
+      <button id="generate" class="btn">Generate Advanced Reply</button>
+      <button id="reset" class="btn secondary">Reset Sliders</button>
+    </div>
+
+    <div id="status" class="hint"></div>
+    <div id="output" class="reply" style="display:none"></div>
+
+    <div class="meter" aria-live="polite">
+      <div class="bar"><div id="fill" class="fill"></div></div>
+      <div id="counter" class="count">0 / 10 free today</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Show live values above sliders
+  const sliders=['politics','scispir','heat','formality','empathy','direct','humor','roast','optimism','length'];
+  sliders.forEach(id=>{
+    const el=document.getElementById(id);
+    const v=document.getElementById('v_'+(id==='scispir'?'scispir':id));
+    const update=()=>v.textContent=el.value;
+    el.addEventListener('input',update); update();
+  });
+
+  // Usage meter
+  const DAILY_LIMIT=10;
+  const todayKey=()=>{const d=new Date();return `fs_uses_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+  const getCount=()=>Number(localStorage.getItem(todayKey())||0);
+  const bump=()=>{const k=todayKey();localStorage.setItem(k,String(getCount()+1));refresh();}
+  const refresh=()=>{const used=getCount();const pct=Math.min(100,Math.round((used/DAILY_LIMIT)*100));document.getElementById('fill').style.width=pct+'%';document.getElementById('counter').textContent=`${used} / ${DAILY_LIMIT} free today`;};
+  refresh();
+
+  const btn=document.getElementById('generate'); const out=document.getElementById('output'); const statusEl=document.getElementById('status');
+  document.getElementById('reset').addEventListener('click',()=>{
+    document.getElementById('politics').value=50;
+    document.getElementById('scispir').value=50;
+    document.getElementById('heat').value=40;
+    document.getElementById('formality').value=55;
+    document.getElementById('empathy').value=70;
+    document.getElementById('direct').value=65;
+    document.getElementById('humor').value=45;
+    document.getElementById('roast').value=35;
+    document.getElementById('optimism').value=60;
+    document.getElementById('length').value=75;
+    sliders.forEach(id=>document.getElementById('v_'+(id==='scispir'?'scispir':id)).textContent=document.getElementById(id).value);
+  });
+
+  btn.addEventListener('click', async ()=>{
+    const text=document.getElementById('text').value.trim();
+    if(!text) return alert('Paste a message first.');
+    const payload={
+      mode:'advanced',
+      text,
+      sliders:{
+        politics:+document.getElementById('politics').value,
+        scispir:+document.getElementById('scispir').value,
+        heat:+document.getElementById('heat').value,
+        formality:+document.getElementById('formality').value,
+        empathy:+document.getElementById('empathy').value,
+        direct:+document.getElementById('direct').value,
+        humor:+document.getElementById('humor').value,
+        roast:+document.getElementById('roast').value,
+        optimism:+document.getElementById('optimism').value,
+        length:+document.getElementById('length').value
+      }
+    };
+    btn.disabled=true; btn.textContent='Weaving…'; statusEl.textContent='Composing a long, tailored reply…'; out.style.display='none'; out.textContent='';
+    try{
+      const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const data=await res.json(); if(!res.ok) throw new Error(data.error||'Error');
+      const reply=Array.isArray(data.replies)?data.replies.join('\n\n'):String(data.replies);
+      out.textContent=reply; out.style.display='block';
+      out.onclick=async()=>{await navigator.clipboard.writeText(out.textContent); out.classList.add('copied'); setTimeout(()=>out.classList.remove('copied'),700);};
+      bump(); statusEl.textContent='';
+    }catch(e){out.style.display='block'; out.textContent='Error: '+e.message; statusEl.textContent='Try again in a moment.';}
+    finally{btn.disabled=false; btn.textContent='Generate Advanced Reply';}
+  });
+</script>
+</body>
+</html>
