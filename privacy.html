@@ -4,31 +4,77 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Privacy Policy - FinalSay.ai</title>
+  <meta name="description" content="Privacy Policy for FinalSay.ai">
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-    h1 { color: #333; }
+    :root { --bg:#111; --panel:#1c1c1c; --text:#eee; --muted:#aaa; --accent:#ff5c5c; }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:Arial, Helvetica, sans-serif; background:var(--bg); color:var(--text); line-height:1.6}
+    .wrap{max-width:900px; margin:40px auto; padding:0 20px}
+    h1,h2{color:#fff}
+    .card{background:var(--panel); border-radius:10px; padding:24px; box-shadow:0 2px 10px rgba(0,0,0,.5)}
+    p, li{color:var(--text)}
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    .btn-wrap{margin-top:40px; text-align:center}
+    .btn{display:inline-block; background:var(--accent); color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none}
+    .muted{color:var(--muted); font-size:14px}
   </style>
 </head>
 <body>
-  <h1>Privacy Policy</h1>
-  <p>FinalSay.ai respects your privacy. We do not sell, rent, or share your personal data with third parties, except as required by law or to provide our services.</p>
+  <div class="wrap">
+    <div class="card">
+      <h1>Privacy Policy</h1>
+      <p class="muted">Last updated: <span id="date"></span></p>
 
-  <h2>Information We Collect</h2>
-  <p>We may collect the text you input, along with optional details you choose to share (e.g., name, email). This is solely to improve your experience.</p>
+      <p>FinalSay.ai (“we”, “us”, or “our”) respects your privacy. This Policy explains what we collect, how we use it, and your choices.</p>
 
-  <h2>Cookies</h2>
-  <p>We may use cookies for session management and analytics to understand how users interact with our platform.</p>
+      <h2>Information We Collect</h2>
+      <ul>
+        <li><strong>Input Content:</strong> Text you paste to generate replies. We process this to produce the output. We don’t sell your content.</li>
+        <li><strong>Technical Data:</strong> Basic analytics (IP, device info, usage events) to improve reliability and prevent abuse.</li>
+        <li><strong>Optional Contact:</strong> If you join our waitlist or contact us, we store your email to send updates and support.</li>
+      </ul>
 
-  <h2>Data Storage</h2>
-  <p>Data may be stored temporarily for processing replies. We do not keep permanent logs of conversations unless stated otherwise in future updates.</p>
+      <h2>How We Use Information</h2>
+      <ul>
+        <li>Generate AI responses you request.</li>
+        <li>Operate, secure, and improve FinalSay.ai.</li>
+        <li>Communicate with you about changes, issues, or new features.</li>
+      </ul>
 
-  <h2>Third-Party Services</h2>
-  <p>We may use trusted third-party services (like OpenAI) to process your input and generate responses. These services have their own privacy policies.</p>
+      <h2>Data Retention</h2>
+      <p>Generated requests may be cached briefly for performance and abuse prevention. We don’t keep permanent logs of your pasted content beyond what’s required for security, debugging, or legal compliance.</p>
 
-  <h2>Your Consent</h2>
-  <p>By using FinalSay.ai, you consent to our privacy practices.</p>
+      <h2>Third‑Party Services</h2>
+      <p>We use reputable providers (e.g., hosting, analytics, AI APIs like OpenAI). These processors handle data under their own privacy terms.</p>
 
-  <h2>Contact</h2>
-  <p>Questions? Email us at support@finalsay.ai.</p>
+      <h2>Security</h2>
+      <p>We use industry‑standard measures to protect data. No method is 100% secure; please use the service responsibly.</p>
+
+      <h2>Your Choices</h2>
+      <ul>
+        <li>You can choose not to provide optional info.</li>
+        <li>You can request deletion of contact data by emailing <a href="mailto:support@finalsay.ai">support@finalsay.ai</a>.</li>
+      </ul>
+
+      <h2>Children</h2>
+      <p>FinalSay.ai is not intended for children under 13.</p>
+
+      <h2>Changes to This Policy</h2>
+      <p>We may update this Policy. We’ll post the new version here with an updated date.</p>
+
+      <h2>Contact</h2>
+      <p>Questions? <a href="mailto:support@finalsay.ai">support@finalsay.ai</a></p>
+
+      <div class="btn-wrap">
+        <a class="btn" href="/">⬅ Return to Main</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    // auto-fill date
+    const d = new Date();
+    document.getElementById('date').textContent = d.toLocaleDateString();
+  </script>
 </body>
 </html>
